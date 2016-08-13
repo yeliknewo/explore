@@ -1,17 +1,13 @@
 use std::sync::{mpsc, Arc};
-use gfx_core;
-// use gfx;
-// use gfx::traits::FactoryExt;
-// use gfx::{Device};
+use gfx;
+use gfx::traits::FactoryExt;
 use gfx_device_gl;
 use gfx_window_glutin;
 use glutin;
-use nalgebra;
-use nalgebra::{ToHomogeneous};
 use specs;
 
-pub type ColorFormat = gfx_core::format::Rgba8;
-pub type DepthFormat = gfx_core::format::DepthStencil;
+pub type ColorFormat = gfx::format::Rgba8;
+pub type DepthFormat = gfx::format::DepthStencil;
 
 pub type Index = u32;
 
@@ -46,43 +42,32 @@ impl Vertex {
     }
 }
 
-pub struct Graphics<R: gfx_core::Resources, F: gfx_core::factory::Factory<R>> {
-    out_color: gfx_core::handle::RenderTargetView<R, ColorFormat>,
-    out_depth: gfx_core::handle::DepthStencilView<R, DepthFormat>,
-    factory: F,
-}
+pub fn build_graphics() -> (
+    (gfx::handle::RenderTargetView<gfx_device_gl::Resources, ColorFormat>, gfx::handle::DepthStencilView<gfx_device_gl::Resources, DepthFormat>),
+    gfx_device_gl::Factory,
+    gfx::Encoder<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer>,
+    glutin::Window,
+    gfx_device_gl::Device
+) {
+    let builder = glutin::WindowBuilder::new()
+        .with_title("Explore")
+        .with_dimensions(1024, 768)
+        .with_vsync();
 
-impl<R, F> Graphics<R, F> where
-R: gfx_core::Resources,
-F: gfx_core::factory::Factory<R>
-{
-    pub fn new_glutin() -> (Graphics<gfx_device_gl::Resources, gfx_device_gl::Factory>, gfx::Encoder<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer>) {
-        let builder = glutin::WindowBuilder::new()
-            .with_title("Explore")
-            .with_dimensions(1024, 768)
-            .with_vsync();
+    let (window, device, mut factory, main_color, main_depth) = gfx_window_glutin::init::<ColorFormat, DepthFormat>(builder);
 
-        let (window, mut device, mut factory, main_color, main_depth) = gfx_window_glutin::init::<ColorFormat, DepthFormat>(builder);
+    let encoder: gfx::Encoder<_, _> = factory.create_command_buffer().into();
 
-        let mut encoder: gfx::Encoder<_, _> = factory.create_command_buffer().into();
-
+    (
         (
-            Graphics {
-                out_color: main_color,
-                out_depth: main_depth,
-                factory: factory,
-            },
-            encoder
-        )
-    }
-
-    pub fn make_render_system<C: gfx_core::draw::CommandBuffer<R>>(&self, encoder_channel: EncoderChannel<R, C>) -> RenderSystem<R, C> {
-        RenderSystem::new(encoder_channel, self.out_color.clone(), self.out_depth.clone())
-    }
-
-    pub fn get_args(&mut self) -> &mut F {
-        &mut self.factory
-    }
+            main_color,
+            main_depth
+        ),
+        factory,
+        encoder,
+        window,
+        device
+    )
 }
 
 // pub fn build() {
@@ -174,6 +159,30 @@ F: gfx_core::factory::Factory<R>
 //     }
 // }
 
+struct Bundle {
+    slice: gfx::Slice<gfx_device_gl::Resources>,
+    pso: gfx::PipelineState<gfx_device_gl::Resources, pipe::Meta>,
+    data: pipe::Data<gfx_device_gl::Resources>,
+}
+
+impl Bundle {
+    fn new(
+        slice: gfx::Slice<gfx_device_gl::Resources>,
+        pso: gfx::PipelineState<gfx_device_gl::Resources, pipe::Meta>,
+        data: pipe::Data<gfx_device_gl::Resources>
+    ) -> Bundle
+    {
+        Bundle {
+            slice: slice,
+            pso: pso,
+            data: data,
+        }
+    }
+
+    pub fn encode(&self, encoder: &mut gfx::Encoder<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer>) {
+        encoder.draw(&self.slice, &self.pso, &self.data);
+    }
+}
 
 pub struct CompRenderType(usize);
 
@@ -181,29 +190,41 @@ impl specs::Component for CompRenderType {
     type Storage = specs::VecStorage<CompRenderType>;
 }
 
-pub struct EncoderChannel<R: gfx_core::Resources, C: gfx_core::draw::CommandBuffer<R>> {
-    pub receiver: mpsc::Receiver<gfx::Encoder<R, C>>,
-    pub sender: mpsc::Sender<gfx::Encoder<R, C>>,
+pub struct EncoderChannel {
+    pub receiver: mpsc::Receiver<gfx::Encoder<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer>>,
+    pub sender: mpsc::Sender<gfx::Encoder<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer>>,
 }
 
-pub struct RenderSystem<R: gfx_core::Resources, C: gfx_core::draw::CommandBuffer<R>> {
-    channel: EncoderChannel<R, C>,
-    out_color: gfx_core::handle::RenderTargetView<R, ColorFormat>,
-    out_depth: gfx_core::handle::DepthStencilView<R, DepthFormat>,
-    bundles: Arc<Vec<gfx::Bundle<R, pipe::Data<R>>>>,
+pub struct RenderSystem {
+    channel: EncoderChannel,
+    out_color: gfx::handle::RenderTargetView<gfx_device_gl::Resources, ColorFormat>,
+    out_depth: gfx::handle::DepthStencilView<gfx_device_gl::Resources, DepthFormat>,
+    bundles: Arc<Vec<Bundle>>,
 }
 
-impl<R: gfx_core::Resources, C: gfx_core::draw::CommandBuffer<R>> RenderSystem<R, C> {
-    fn new(channel: EncoderChannel<R, C>, out_color: gfx_core::handle::RenderTargetView<R, ColorFormat>, out_depth: gfx_core::handle::DepthStencilView<R, DepthFormat>) -> RenderSystem<R, C> {
+impl RenderSystem {
+    pub fn new(
+        channel: EncoderChannel,
+        graphics_data: (
+            gfx::handle::RenderTargetView<gfx_device_gl::Resources, ColorFormat>,
+            gfx::handle::DepthStencilView<gfx_device_gl::Resources, DepthFormat>
+        )
+    ) -> RenderSystem
+    {
         RenderSystem {
             channel: channel,
-            out_color: out_color,
-            out_depth: out_depth,
+            out_color: graphics_data.0,
+            out_depth: graphics_data.1,
             bundles: Arc::new(Vec::new()),
         }
     }
 
-    fn add_render_type<F: gfx_core::Factory<R>>(&mut self, factory: &mut F, primitive: gfx_core::Primitive, rast: gfx_core::state::Rasterizer, vertices: &[Vertex], indices: &[Index]) -> CompRenderType {
+    pub fn add_render_type(&mut self,
+        factory: &mut gfx_device_gl::Factory,
+        vertices: &[Vertex],
+        indices: &[Index]
+    ) -> CompRenderType
+    {
         let pso = factory.create_pipeline_simple (
             include_bytes!("shader/explore_150_v.glsl"),
             include_bytes!("shader/explore_150_f.glsl"),
@@ -218,16 +239,13 @@ impl<R: gfx_core::Resources, C: gfx_core::draw::CommandBuffer<R>> RenderSystem<R
         };
         let id = self.bundles.len();
         let mut bundles = Arc::get_mut(&mut self.bundles).unwrap();
-        bundles.push(gfx_core::Bundle::new(slice, pso, data));
+        bundles.push(Bundle::new(slice, pso, data));
         CompRenderType(id)
     }
 }
 
-impl<R, C> specs::System<f32> for RenderSystem<R, C> where
-R: 'static + gfx_core::Resources,
-C: 'static + gfx_core::draw::CommandBuffer<R> + Send,
-{
-    fn run(&mut self, arg: specs::RunArg, _: f32) {
+impl specs::System<::Delta> for RenderSystem {
+    fn run(&mut self, arg: specs::RunArg, _: ::Delta) {
         use specs::Join;
 
         let mut encoder = match self.channel.receiver.recv() {
