@@ -1,0 +1,18 @@
+[package]
+name = "explore"
+version = "0.1.0"
+authors = ["Kiley Owen <yelikdev@gmail.com>"]
+
+[dependencies]
+gfx_core = "*"
+gfx = "*"
+gfx_device_gl = "*"
+gfx_window_glutin = "*"
+glutin = "*"
+specs = "*"
+nalgebra = "*"
+ncollide = "*"
+time = "*"
+rand = "*"
+genmesh = "*"
+image = "*"
