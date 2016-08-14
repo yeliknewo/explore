@@ -1,12 +1,10 @@
-use gfx;
 use gfx_device_gl;
 use specs;
 use nalgebra;
 use time;
 use std;
 
-use {ReceiverHub, CompRenderType, CompTransform, CompCamera, EncoderChannel, RenderSystem, ColorFormat, DepthFormat};
-
+use {GameEventHub};
 
 pub struct Game {
     planner: specs::Planner<::Delta>,
@@ -19,33 +17,24 @@ pub struct Game {
 impl Game {
     pub fn new(
         factory: &mut gfx_device_gl::Factory,
-        (control_recv, _): ReceiverHub,
-        control_send: std::sync::mpsc::Sender<(
-            gfx::handle::RenderTargetView<gfx_device_gl::Resources, ColorFormat>,
-            gfx::handle::DepthStencilView<gfx_device_gl::Resources, DepthFormat>
-        )>,
-        encoder_channel: EncoderChannel,
-        graphics_data: (
-            gfx::handle::RenderTargetView<gfx_device_gl::Resources, ColorFormat>,
-            gfx::handle::DepthStencilView<gfx_device_gl::Resources, DepthFormat>
-        )
+        mut game_event_hub: GameEventHub
     ) -> Game
     {
         let mut planner = {
             let mut w = specs::World::new();
 
-            w.register::<CompRenderType>();
-            w.register::<CompTransform>();
-            w.register::<CompCamera>();
+            w.register::<::comps::RenderType>();
+            w.register::<::comps::Transform>();
+            w.register::<::comps::Camera>();
 
             specs::Planner::<::Delta>::new(w, 4)
         };
 
-        let mut renderer = RenderSystem::new(encoder_channel, graphics_data);
+        let mut renderer = ::sys::render::System::new(game_event_hub.render_channel.take().unwrap());
 
         let tile_render = ::art::make_square_render(&mut renderer, factory);
         let player = planner.mut_world().create_now()
-            .with(CompCamera::new(
+            .with(::comps::Camera::new(
                 nalgebra::Point3::new(0.0, 0.0, 2.0),
                 nalgebra::Point3::new(0.0, 0.0, 0.0),
                 nalgebra::Vector3::new(0.0, 1.0, 0.0),
@@ -57,7 +46,7 @@ impl Game {
             for x in -10..10 {
                 planner.mut_world().create_now()
                     .with(tile_render)
-                    .with(CompTransform::new(
+                    .with(::comps::Transform::new(
                         nalgebra::Isometry3::new(
                             nalgebra::Vector3::new(x as f32, y as f32, 0.0),
                             nalgebra::Vector3::new(0.0, 0.0, 0.0),
@@ -69,7 +58,7 @@ impl Game {
         }
 
         planner.add_system(renderer, "renderer", 10);
-        planner.add_system(::control::System::new(control_recv, control_send, (10.0, 10.0)), "control", 30);
+        planner.add_system(::sys::control::System::new(game_event_hub.control_channel.take().unwrap(), (10.0, 10.0)), "control", 30);
 
         Game {
             planner: planner,

@@ -1,6 +1,6 @@
 use gfx_device_gl::{Factory};
 
-use {CompRenderType, RenderSystem, Vertex};
+use {Vertex};
 
 // pub fn make_cube_render(renderer: &mut RenderSystem, factory: &mut Factory) -> CompRenderType {
 //     let vertices = &[
@@ -31,7 +31,7 @@ use {CompRenderType, RenderSystem, Vertex};
 //    )
 // }
 
-pub fn make_square_render(renderer: &mut RenderSystem, factory: &mut Factory) -> CompRenderType {
+pub fn make_square_render(renderer: &mut ::sys::render::System, factory: &mut Factory) -> ::comps::RenderType {
     let vertices = &[
         Vertex::new([-1.0, -1.0, 0.0], [0.0, 0.0, 1.0, 1.0]),
         Vertex::new([-1.0,  1.0, 0.0], [0.0, 1.0, 0.0, 1.0]),

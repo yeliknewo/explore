@@ -2,21 +2,21 @@ use nalgebra;
 use nalgebra::ToHomogeneous;
 use specs;
 
-pub struct CompTransform {
+pub struct Transform {
     isometry: nalgebra::Isometry3<f32>,
     scale: nalgebra::Vector3<f32>,
 }
 
-impl CompTransform {
-    pub fn new_identity() -> CompTransform {
-        CompTransform::new(
+impl Transform {
+    pub fn new_identity() -> Transform {
+        Transform::new(
             nalgebra::Isometry3::new(nalgebra::Vector3::new(0.0, 0.0, 0.0), nalgebra::Vector3::new(0.0, 0.0, 0.0)),
             nalgebra::Vector3::new(1.0, 1.0, 1.0)
         )
     }
 
-    pub fn new(isometry: nalgebra::Isometry3<f32>, scale: nalgebra::Vector3<f32>) -> CompTransform {
-        CompTransform {
+    pub fn new(isometry: nalgebra::Isometry3<f32>, scale: nalgebra::Vector3<f32>) -> Transform {
+        Transform {
             isometry: isometry,
             scale: scale,
         }
@@ -31,6 +31,6 @@ impl CompTransform {
     }
 }
 
-impl specs::Component for CompTransform {
-    type Storage = specs::VecStorage<CompTransform>;
+impl specs::Component for Transform {
+    type Storage = specs::VecStorage<Transform>;
 }

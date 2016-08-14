@@ -2,22 +2,22 @@ use specs;
 use nalgebra;
 use nalgebra::ToHomogeneous;
 
-pub struct CompCamera {
+pub struct Camera {
     eye: nalgebra::Point3<f32>,
     target: nalgebra::Point3<f32>,
     up: nalgebra::Vector3<f32>,
     proj: nalgebra::OrthographicMatrix3<f32>,
 }
 
-impl CompCamera {
+impl Camera {
     pub fn new(
         eye: nalgebra::Point3<f32>,
         target: nalgebra::Point3<f32>,
         up: nalgebra::Vector3<f32>,
         proj: nalgebra::OrthographicMatrix3<f32>
-    ) -> CompCamera
+    ) -> ::comps::Camera
     {
-        CompCamera {
+        ::comps::Camera {
             eye: eye,
             target: target,
             up: up,
@@ -55,6 +55,6 @@ impl CompCamera {
     }
 }
 
-impl specs::Component for CompCamera {
-    type Storage = specs::VecStorage<CompCamera>;
+impl specs::Component for Camera {
+    type Storage = specs::VecStorage<Camera>;
 }

@@ -1,17 +1,22 @@
 use std::sync::{mpsc};
-use gfx;
-use gfx_device_gl;
 use specs;
 use nalgebra;
 
-use {ColorFormat, DepthFormat};
+pub type Channel = (
+    mpsc::Sender<SendEvent>,
+    mpsc::Receiver<RecvEvent>
+);
 
-pub enum Event {
+pub enum RecvEvent {
     Right(bool),
     Left(bool),
     Up(bool),
     Down(bool),
     Resize(u32, u32),
+}
+
+pub enum SendEvent {
+    Resize,
 }
 
 #[derive(Copy, Clone)]
@@ -22,11 +27,7 @@ enum Sign {
 }
 
 pub struct System {
-    control_recv: mpsc::Receiver<Event>,
-    control_send: mpsc::Sender<(
-        gfx::handle::RenderTargetView<gfx_device_gl::Resources, ColorFormat>,
-        gfx::handle::DepthStencilView<gfx_device_gl::Resources, DepthFormat>
-    )>,
+    channel: Channel,
     move_h: Sign,
     move_v: Sign,
     move_speed_mult: (f32, f32),
@@ -35,17 +36,12 @@ pub struct System {
 
 impl System {
     pub fn new(
-        control_recv: mpsc::Receiver<Event>,
-        control_send: mpsc::Sender<(
-            gfx::handle::RenderTargetView<gfx_device_gl::Resources, ColorFormat>,
-            gfx::handle::DepthStencilView<gfx_device_gl::Resources, DepthFormat>
-        )>,
+        channel: Channel,
         move_speed_mult: (f32, f32)
     ) -> System
     {
         System {
-            control_recv: control_recv,
-            control_send: control_send,
+            channel: channel,
             move_h: Sign::Zero,
             move_v: Sign::Zero,
             move_speed_mult: move_speed_mult,
@@ -55,37 +51,40 @@ impl System {
 
     fn check_input(&mut self) {
         loop {
-            match self.control_recv.try_recv() {
+            match self.channel.1.try_recv() {
                 Ok(event) => match event {
-                    Event::Right(pressed) => {
+                    RecvEvent::Right(pressed) => {
                         if pressed {
                             self.move_h = Sign::Pos;
                         } else if let Sign::Pos = self.move_h {
                             self.move_h = Sign::Zero;
                         }
                     },
-                    Event::Left(pressed) => {
+                    RecvEvent::Left(pressed) => {
                         if pressed {
                             self.move_h = Sign::Neg;
                         } else if let Sign::Neg = self.move_h {
                             self.move_h = Sign::Zero;
                         }
                     },
-                    Event::Up(pressed) => {
+                    RecvEvent::Up(pressed) => {
                         if pressed {
                             self.move_v = Sign::Pos;
                         } else if let Sign::Pos = self.move_v {
                             self.move_v = Sign::Zero;
                         }
                     },
-                    Event::Down(pressed) => {
+                    RecvEvent::Down(pressed) => {
                         if pressed {
                             self.move_v = Sign::Neg;
                         } else if let Sign::Neg = self.move_v {
                             self.move_v = Sign::Zero;
                         }
                     },
-                    Event::Resize(width, height) => self.resize = Some((width, height)),
+                    RecvEvent::Resize(width, height) => {
+                        self.channel.0.send(SendEvent::Resize).unwrap();
+                        self.resize = Some((width, height));
+                    },
                 },
                 Err(_) => return,
             }
@@ -93,12 +92,14 @@ impl System {
     }
 }
 
-impl specs::System<::Delta> for System {
+impl<'a> specs::System<::Delta> for System {
     fn run(&mut self, arg: specs::RunArg, time: ::Delta) {
         use specs::Join;
+
         self.check_input();
+
         let mut camera = arg.fetch(|w| {
-                w.write::<::camera::CompCamera>()
+                w.write::<::comps::Camera>()
         });
 
         for mut c in (&mut camera).iter() {
@@ -121,7 +122,6 @@ impl specs::System<::Delta> for System {
             }
             if let Some((width, height)) = self.resize.take() {
                 c.set_proj(nalgebra::OrthographicMatrix3::new_with_fov(width as f32 / height as f32, 90.0, 0.01, 10.0));
-                self.control_send.send().unwrap();
             }
         }
     }

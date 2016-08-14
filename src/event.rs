@@ -1,53 +1,108 @@
 use std::sync::mpsc;
 use glutin;
 
-pub type ReceiverHub = (
-    mpsc::Receiver<::control::Event>,
-    u8
-);
-
-pub struct SenderHub {
-    control: mpsc::Sender<::control::Event>,
+pub struct GameEventHub {
+    pub control_channel: Option<::sys::control::Channel>,
+    pub render_channel: Option<::sys::render::Channel>,
 }
 
-impl SenderHub {
-    pub fn new() -> (SenderHub, ReceiverHub) {
+impl GameEventHub {
+    pub fn new(
+        control_channel: (mpsc::Sender<::sys::control::SendEvent>, mpsc::Receiver<::sys::control::RecvEvent>),
+        render_channel: (mpsc::Sender<::sys::render::SendEvent>, mpsc::Receiver<::sys::render::RecvEvent>)
+    ) -> GameEventHub {
+        GameEventHub {
+            control_channel: Some(control_channel),
+            render_channel: Some(render_channel),
+        }
+    }
+}
+
+pub struct DevEventHub {
+    send_to_control: mpsc::Sender<::sys::control::RecvEvent>,
+    recv_from_control: mpsc::Receiver<::sys::control::SendEvent>,
+    send_to_render: mpsc::Sender<::sys::render::RecvEvent>,
+    recv_from_render: mpsc::Receiver<::sys::render::SendEvent>,
+}
+
+impl DevEventHub{
+    pub fn new() -> (DevEventHub, GameEventHub) {
         // let (s###, r###) = mpsc::channel();
 
-        let (sc, rc) = mpsc::channel();
-
-        (SenderHub {
-            control: sc,
-        }, (rc, 0))
+        let (send_to_control, recv_from_control) = mpsc::channel();
+        let (send_from_control, recv_to_control) = mpsc::channel();
+        let (send_to_render, recv_from_render) = mpsc::channel();
+        let (send_from_render, recv_to_render) = mpsc::channel();
+        (
+            DevEventHub::new_internal(
+                send_to_control, recv_to_control,
+                send_to_render, recv_to_render
+            ),
+            GameEventHub::new((send_from_control, recv_from_control), (send_from_render, recv_from_render))
+        )
     }
 
-    pub fn process_glutin(&self, event: glutin::Event) {
+    fn new_internal(
+        send_to_control: mpsc::Sender<::sys::control::RecvEvent>,
+        recv_from_control: mpsc::Receiver<::sys::control::SendEvent>,
+        send_to_render: mpsc::Sender<::sys::render::RecvEvent>,
+        recv_from_render: mpsc::Receiver<::sys::render::SendEvent>
+    ) -> DevEventHub
+    {
+        DevEventHub {
+            send_to_control: send_to_control,
+            recv_from_control: recv_from_control,
+            send_to_render: send_to_render,
+            recv_from_render: recv_from_render,
+        }
+    }
+
+    pub fn send_to_control(&mut self, event: ::sys::control::RecvEvent) {
+        self.send_to_control.send(event).unwrap();
+    }
+
+    pub fn recv_from_control(&mut self) -> ::sys::control::SendEvent {
+        self.recv_from_control.recv().unwrap()
+    }
+
+    pub fn try_recv_from_control(&mut self) -> Result<::sys::control::SendEvent, mpsc::TryRecvError> {
+        self.recv_from_control.try_recv()
+    }
+
+    pub fn send_to_render(&mut self, event: ::sys::render::RecvEvent) {
+        self.send_to_render.send(event).unwrap();
+    }
+
+    pub fn recv_from_render(&mut self) -> ::sys::render::SendEvent {
+        self.recv_from_render.recv().unwrap()
+    }
+
+    pub fn process_glutin(&mut self, event: glutin::Event) {
         use glutin::Event::{Resized, KeyboardInput};
         use glutin::{ElementState, VirtualKeyCode};
 
         match event {
-            // KeyboardInput(state, _, Some(VirtualKeyCode::A)) => self.####.send().unwrap(),
             KeyboardInput(state, _, Some(VirtualKeyCode::D)) |
             KeyboardInput(state, _, Some(VirtualKeyCode::Right)) => match state {
-                ElementState::Pressed => self.control.send(::control::Event::Right(true)).unwrap(),
-                ElementState::Released => self.control.send(::control::Event::Right(false)).unwrap(),
+                ElementState::Pressed => self.send_to_control.send(::sys::control::RecvEvent::Right(true)).unwrap(),
+                ElementState::Released => self.send_to_control.send(::sys::control::RecvEvent::Right(false)).unwrap(),
             },
             KeyboardInput(state, _, Some(VirtualKeyCode::A)) |
             KeyboardInput(state, _, Some(VirtualKeyCode::Left)) => match state {
-                ElementState::Pressed => self.control.send(::control::Event::Left(true)).unwrap(),
-                ElementState::Released => self.control.send(::control::Event::Left(false)).unwrap(),
+                ElementState::Pressed => self.send_to_control.send(::sys::control::RecvEvent::Left(true)).unwrap(),
+                ElementState::Released => self.send_to_control.send(::sys::control::RecvEvent::Left(false)).unwrap(),
             },
             KeyboardInput(state, _, Some(VirtualKeyCode::W)) |
             KeyboardInput(state, _, Some(VirtualKeyCode::Up)) => match state {
-                ElementState::Pressed => self.control.send(::control::Event::Up(true)).unwrap(),
-                ElementState::Released => self.control.send(::control::Event::Up(false)).unwrap(),
+                ElementState::Pressed => self.send_to_control.send(::sys::control::RecvEvent::Up(true)).unwrap(),
+                ElementState::Released => self.send_to_control.send(::sys::control::RecvEvent::Up(false)).unwrap(),
             },
             KeyboardInput(state, _, Some(VirtualKeyCode::S)) |
             KeyboardInput(state, _, Some(VirtualKeyCode::Down)) => match state {
-                ElementState::Pressed => self.control.send(::control::Event::Down(true)).unwrap(),
-                ElementState::Released => self.control.send(::control::Event::Down(false)).unwrap(),
+                ElementState::Pressed => self.send_to_control.send(::sys::control::RecvEvent::Down(true)).unwrap(),
+                ElementState::Released => self.send_to_control.send(::sys::control::RecvEvent::Down(false)).unwrap(),
             },
-            Resized(width, height) => self.control.send(::control::Event::Resize(width, height)).unwrap(),
+            Resized(width, height) => self.send_to_control.send(::sys::control::RecvEvent::Resize(width, height)).unwrap(),
             _ => (),
         }
     }

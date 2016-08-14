@@ -9,41 +9,33 @@ extern crate time;
 
 mod art;
 mod game;
-mod graphics;
 mod event;
 
-mod control;
+pub mod systems;
 
-mod transform;
-mod camera;
+pub use ::systems as sys;
 
-use std::sync::{mpsc};
+pub mod components;
 
-pub use graphics::{Vertex, Index, RenderSystem, CompRenderType, EncoderChannel, ColorFormat, DepthFormat};
-pub use event::{ReceiverHub};
-pub use transform::{CompTransform};
-pub use camera::{CompCamera};
+pub use ::components as comps;
+
+pub use sys::render::{Vertex, Index, ColorFormat, DepthFormat};
+pub use event::{GameEventHub, DevEventHub};
 
 pub type Delta = f32;
 
 fn main() {
-    let (mut graphics_data, mut factory, encoder, window, mut device) = graphics::build_graphics();
+    let ((mut out_color, mut out_depth), mut factory, encoder, window, mut device) = sys::render::build_graphics();
 
 
-    let (event_send, event_recv) = event::SenderHub::new();
-    let (game_send, dev_recv) = mpsc::channel();
-    let (dev_send, game_recv) = mpsc::channel();
-    let (control_send, control_recv) = mpsc::channel();
+    let (mut event_dev, game_event) = DevEventHub::new();
 
-    game_send.send(encoder.clone_empty()).unwrap();
-    game_send.send(encoder).unwrap();
+    event_dev.send_to_render(sys::render::RecvEvent::GraphicsData(out_color.clone(), out_depth.clone()));
 
-    let encoder_channel = EncoderChannel {
-        receiver: game_recv,
-        sender: game_send,
-    };
+    event_dev.send_to_render(sys::render::RecvEvent::Encoder(encoder.clone_empty()));
+    event_dev.send_to_render(sys::render::RecvEvent::Encoder(encoder));
 
-    let game = game::Game::new(&mut factory, event_recv, control_send, encoder_channel, graphics_data);
+    let game = game::Game::new(&mut factory, game_event);
 
     std::thread::spawn(|| {
         let mut game = game;
@@ -52,27 +44,32 @@ fn main() {
 
 
     'main: loop {
-        use gfx::Device;
-        let mut encoder = match dev_recv.recv() {
-            Ok(r) => r,
-            Err(_) => break 'main,
-        };
+        match event_dev.recv_from_render() {
+            sys::render::SendEvent::Encoder(mut encoder) => {
+                use gfx::Device;
 
-        for event in window.poll_events() {
+                for event in window.poll_events() {
+                    match event {
+                        glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::Escape)) |
+                        glutin::Event::Closed => break 'main,
+                        _ => event_dev.process_glutin(event),
+                    }
+                }
+
+                encoder.flush(&mut device);
+                event_dev.send_to_render(sys::render::RecvEvent::Encoder(encoder));
+                window.swap_buffers().unwrap();
+                device.cleanup();
+            },
+        }
+
+        if let Ok(event) = event_dev.try_recv_from_control() {
             match event {
-                glutin::Event::KeyboardInput(_, _, Some(glutin::VirtualKeyCode::Escape)) |
-                glutin::Event::Closed => break 'main,
-                _ => event_send.process_glutin(event),
+                sys::control::SendEvent::Resize => {
+                    gfx_window_glutin::update_views(&window, &mut out_color, &mut out_depth);
+                    event_dev.send_to_render(sys::render::RecvEvent::GraphicsData(out_color.clone(), out_depth.clone()));
+                }
             }
         }
-
-        if let Ok(graphics_data) = control_recv.try_recv() {
-            gfx_window_glutin::update_views(&window, &mut graphics_data.0, &mut graphics_data.1);
-        }
-
-        encoder.flush(&mut device);
-        dev_send.send(encoder).unwrap();
-        window.swap_buffers().unwrap();
-        device.cleanup();
     }
 }
