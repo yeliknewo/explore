@@ -27,12 +27,13 @@ pub use camera::{CompCamera};
 pub type Delta = f32;
 
 fn main() {
-    let (graphics_data, mut factory, encoder, window, mut device) = graphics::build_graphics();
+    let (mut graphics_data, mut factory, encoder, window, mut device) = graphics::build_graphics();
 
 
     let (event_send, event_recv) = event::SenderHub::new();
     let (game_send, dev_recv) = mpsc::channel();
     let (dev_send, game_recv) = mpsc::channel();
+    let (control_send, control_recv) = mpsc::channel();
 
     game_send.send(encoder.clone_empty()).unwrap();
     game_send.send(encoder).unwrap();
@@ -42,7 +43,7 @@ fn main() {
         sender: game_send,
     };
 
-    let game = game::Game::new(&mut factory, event_recv, encoder_channel, graphics_data);
+    let game = game::Game::new(&mut factory, event_recv, control_send, encoder_channel, graphics_data);
 
     std::thread::spawn(|| {
         let mut game = game;
@@ -63,6 +64,10 @@ fn main() {
                 glutin::Event::Closed => break 'main,
                 _ => event_send.process_glutin(event),
             }
+        }
+
+        if let Ok(graphics_data) = control_recv.try_recv() {
+            gfx_window_glutin::update_views(&window, &mut graphics_data.0, &mut graphics_data.1);
         }
 
         encoder.flush(&mut device);

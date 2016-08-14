@@ -256,7 +256,7 @@ impl specs::System<::Delta> for RenderSystem {
         };
 
         let (draw, transform, camera) = arg.fetch(|w| {
-            (w.read::<CompRenderType>(), w.read::<::transform::CompTransform>(), w.read::<super::camera::CompCamera>())
+            (w.read::<CompRenderType>(), w.read::<::transform::CompTransform>(), w.read::<::camera::CompCamera>())
         });
 
         encoder.clear(&self.out_color, [0.1, 0.1, 0.1, 1.0]);

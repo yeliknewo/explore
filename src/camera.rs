@@ -38,6 +38,10 @@ impl CompCamera {
         self.target = target;
     }
 
+    pub fn set_proj(&mut self, proj: nalgebra::OrthographicMatrix3<f32>) {
+        self.proj = proj;
+    }
+
     pub fn get_offset(&self) -> (f32, f32) {
         (self.eye.x, self.eye.y)
     }

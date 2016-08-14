@@ -20,6 +20,10 @@ impl Game {
     pub fn new(
         factory: &mut gfx_device_gl::Factory,
         (control_recv, _): ReceiverHub,
+        control_send: std::sync::mpsc::Sender<(
+            gfx::handle::RenderTargetView<gfx_device_gl::Resources, ColorFormat>,
+            gfx::handle::DepthStencilView<gfx_device_gl::Resources, DepthFormat>
+        )>,
         encoder_channel: EncoderChannel,
         graphics_data: (
             gfx::handle::RenderTargetView<gfx_device_gl::Resources, ColorFormat>,
@@ -39,7 +43,7 @@ impl Game {
 
         let mut renderer = RenderSystem::new(encoder_channel, graphics_data);
 
-        let cube_render = ::art::make_cube_render(&mut renderer, factory);
+        let tile_render = ::art::make_square_render(&mut renderer, factory);
         let player = planner.mut_world().create_now()
             .with(CompCamera::new(
                 nalgebra::Point3::new(0.0, 0.0, 2.0),
@@ -52,11 +56,11 @@ impl Game {
         for y in -10..10 {
             for x in -10..10 {
                 planner.mut_world().create_now()
-                    .with(cube_render)
+                    .with(tile_render)
                     .with(CompTransform::new(
                         nalgebra::Isometry3::new(
                             nalgebra::Vector3::new(x as f32, y as f32, 0.0),
-                            nalgebra::Vector3::new(x as f32, y as f32, 0.0),
+                            nalgebra::Vector3::new(0.0, 0.0, 0.0),
                         ),
                         nalgebra::Vector3::new(1.0, 1.0, 1.0)
                     ))
@@ -65,7 +69,7 @@ impl Game {
         }
 
         planner.add_system(renderer, "renderer", 10);
-        planner.add_system(::control::System::new(control_recv, (10.0, 10.0)), "control", 30);
+        planner.add_system(::control::System::new(control_recv, control_send, (10.0, 10.0)), "control", 30);
 
         Game {
             planner: planner,

@@ -22,7 +22,7 @@ impl SenderHub {
     }
 
     pub fn process_glutin(&self, event: glutin::Event) {
-        use glutin::Event::KeyboardInput;
+        use glutin::Event::{Resized, KeyboardInput};
         use glutin::{ElementState, VirtualKeyCode};
 
         match event {
@@ -47,6 +47,7 @@ impl SenderHub {
                 ElementState::Pressed => self.control.send(::control::Event::Down(true)).unwrap(),
                 ElementState::Released => self.control.send(::control::Event::Down(false)).unwrap(),
             },
+            Resized(width, height) => self.control.send(::control::Event::Resize(width, height)).unwrap(),
             _ => (),
         }
     }
