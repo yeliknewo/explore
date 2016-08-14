@@ -19,7 +19,7 @@ mod camera;
 
 use std::sync::{mpsc};
 
-pub use graphics::{RenderSystem, CompRenderType, EncoderChannel, ColorFormat, DepthFormat};
+pub use graphics::{Vertex, Index, RenderSystem, CompRenderType, EncoderChannel, ColorFormat, DepthFormat};
 pub use event::{ReceiverHub};
 pub use transform::{CompTransform};
 pub use camera::{CompCamera};

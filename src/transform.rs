@@ -23,7 +23,11 @@ impl CompTransform {
     }
 
     pub fn get_model(&self) -> [[f32; 4]; 4] {
-        *self.isometry.to_homogeneous().as_ref()
+        let mut refer = *self.isometry.to_homogeneous().as_ref();
+        refer[0][0] *= self.scale.x;
+        refer[1][1] *= self.scale.y;
+        refer[2][2] *= self.scale.z;
+        refer
     }
 }
 

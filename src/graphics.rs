@@ -34,7 +34,7 @@ gfx_defines! {
 }
 
 impl Vertex {
-    fn new(pos: [f32; 3], color: [f32; 4]) -> Vertex {
+    pub fn new(pos: [f32; 3], color: [f32; 4]) -> Vertex {
         Vertex {
             pos: pos,
             color: color,
@@ -52,7 +52,8 @@ pub fn build_graphics() -> (
     let builder = glutin::WindowBuilder::new()
         .with_title("Explore")
         .with_dimensions(1024, 768)
-        .with_vsync();
+        .with_vsync()
+    ;
 
     let (window, device, mut factory, main_color, main_depth) = gfx_window_glutin::init::<ColorFormat, DepthFormat>(builder);
 
@@ -184,6 +185,7 @@ impl Bundle {
     }
 }
 
+#[derive(Copy, Clone, Eq, PartialEq, Hash)]
 pub struct CompRenderType(usize);
 
 impl specs::Component for CompRenderType {
@@ -254,10 +256,10 @@ impl specs::System<::Delta> for RenderSystem {
         };
 
         let (draw, transform, camera) = arg.fetch(|w| {
-            (w.read::<CompRenderType>(), w.read::<super::transform::CompTransform>(), w.read::<super::camera::CompCamera>())
+            (w.read::<CompRenderType>(), w.read::<::transform::CompTransform>(), w.read::<super::camera::CompCamera>())
         });
 
-        encoder.clear(&self.out_color, [0.0, 0.0, 0.0, 1.0]);
+        encoder.clear(&self.out_color, [0.1, 0.1, 0.1, 1.0]);
         encoder.clear_depth(&self.out_depth, 1.0);
 
         let (view, proj) = {
