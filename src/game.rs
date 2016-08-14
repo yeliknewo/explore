@@ -20,10 +20,7 @@ impl Game {
     pub fn new(
         factory: &mut gfx_device_gl::Factory,
         (control_recv, _): ReceiverHub,
-        control_send: std::sync::mpsc::Sender<(
-            gfx::handle::RenderTargetView<gfx_device_gl::Resources, ColorFormat>,
-            gfx::handle::DepthStencilView<gfx_device_gl::Resources, DepthFormat>
-        )>,
+        control_send: std::sync::mpsc::Sender<()>,
         encoder_channel: EncoderChannel,
         graphics_data: (
             gfx::handle::RenderTargetView<gfx_device_gl::Resources, ColorFormat>,

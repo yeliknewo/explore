@@ -1,10 +1,6 @@
 use std::sync::{mpsc};
-use gfx;
-use gfx_device_gl;
 use specs;
 use nalgebra;
-
-use {ColorFormat, DepthFormat};
 
 pub enum Event {
     Right(bool),
@@ -23,10 +19,7 @@ enum Sign {
 
 pub struct System {
     control_recv: mpsc::Receiver<Event>,
-    control_send: mpsc::Sender<(
-        gfx::handle::RenderTargetView<gfx_device_gl::Resources, ColorFormat>,
-        gfx::handle::DepthStencilView<gfx_device_gl::Resources, DepthFormat>
-    )>,
+    control_send: mpsc::Sender<()>,
     move_h: Sign,
     move_v: Sign,
     move_speed_mult: (f32, f32),
@@ -34,15 +27,7 @@ pub struct System {
 }
 
 impl System {
-    pub fn new(
-        control_recv: mpsc::Receiver<Event>,
-        control_send: mpsc::Sender<(
-            gfx::handle::RenderTargetView<gfx_device_gl::Resources, ColorFormat>,
-            gfx::handle::DepthStencilView<gfx_device_gl::Resources, DepthFormat>
-        )>,
-        move_speed_mult: (f32, f32)
-    ) -> System
-    {
+    pub fn new(control_recv: mpsc::Receiver<Event>, control_send: mpsc::Sender<()>, move_speed_mult: (f32, f32)) -> System {
         System {
             control_recv: control_recv,
             control_send: control_send,
@@ -121,7 +106,7 @@ impl specs::System<::Delta> for System {
             }
             if let Some((width, height)) = self.resize.take() {
                 c.set_proj(nalgebra::OrthographicMatrix3::new_with_fov(width as f32 / height as f32, 90.0, 0.01, 10.0));
-                self.control_send.send().unwrap();
+                self.control_send.send(()).unwrap();
             }
         }
     }
