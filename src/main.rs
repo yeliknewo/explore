@@ -1,5 +1,6 @@
 #[macro_use]
 extern crate gfx;
+// extern crate gfx_core;
 extern crate gfx_device_gl;
 extern crate gfx_window_glutin;
 extern crate glutin;
@@ -26,7 +27,6 @@ pub type Delta = f32;
 
 fn main() {
     let ((mut out_color, mut out_depth), mut factory, encoder, window, mut device) = sys::render::build_graphics();
-
 
     let (mut event_dev, game_event) = DevEventHub::new();
 
