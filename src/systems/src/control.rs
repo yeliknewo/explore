@@ -1,10 +1,6 @@
-use std::sync::{mpsc};
-use specs;
-use nalgebra;
-
 pub type Channel = (
-    mpsc::Sender<SendEvent>,
-    mpsc::Receiver<RecvEvent>
+    ::std::sync::mpsc::Sender<SendEvent>,
+    ::std::sync::mpsc::Receiver<RecvEvent>
 );
 
 pub enum RecvEvent {
@@ -109,8 +105,8 @@ impl System {
     }
 }
 
-impl<'a> specs::System<::Delta> for System {
-    fn run(&mut self, arg: specs::RunArg, time: ::Delta) {
+impl<'a> ::specs::System<::utils::Delta> for System {
+    fn run(&mut self, arg: ::specs::RunArg, time: ::utils::Delta) {
         use specs::Join;
 
         self.check_input();
@@ -138,7 +134,7 @@ impl<'a> specs::System<::Delta> for System {
                 }
             }
             if let Some((width, height)) = self.resize.take() {
-                c.set_proj(nalgebra::OrthographicMatrix3::new_with_fov(width as f32 / height as f32, 90.0, 0.01, 10.0));
+                c.set_proj(::nalgebra::OrthographicMatrix3::new_with_fov(width as f32 / height as f32, 90.0, 0.01, 10.0));
             }
         }
     }

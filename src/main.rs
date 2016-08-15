@@ -9,35 +9,24 @@ extern crate time;
 extern crate image;
 extern crate find_folder;
 
-mod art;
-mod game;
-mod event;
-mod graphics;
-
-pub mod systems;
-
-pub use ::systems as sys;
-
-pub mod components;
-
-pub use ::components as comps;
-
-pub use graphics::{ColorFormat, DepthFormat};
-pub use event::{GameEventHub, DevEventHub};
-
-pub type Delta = f32;
+extern crate systems as sys;
+extern crate graphics;
+extern crate core;
+extern crate art;
+extern crate components;
+extern crate utils;
 
 fn main() {
     let ((mut out_color, mut out_depth), mut factory, encoder, window, mut device) = graphics::build_graphics(640, 480);
 
-    let (mut event_dev, game_event) = DevEventHub::new();
+    let (mut event_dev, game_event) = ::core::event::DevEventHub::new();
 
     event_dev.send_to_render(sys::render::RecvEvent::GraphicsData(out_color.clone(), out_depth.clone()));
 
     event_dev.send_to_render(sys::render::RecvEvent::Encoder(encoder.clone_empty()));
     event_dev.send_to_render(sys::render::RecvEvent::Encoder(encoder));
 
-    let game = game::Game::new(&mut factory, game_event);
+    let game = core::game::Game::new(&mut factory, game_event);
 
     std::thread::spawn(|| {
         let mut game = game;
@@ -76,5 +65,5 @@ fn main() {
 
     event_dev.send_to_render(sys::render::RecvEvent::Exit);
     event_dev.send_to_control(sys::control::RecvEvent::Exit);
-    event_dev.send_to_game(game::RecvEvent::Exit);
+    event_dev.send_to_game(core::game::RecvEvent::Exit);
 }

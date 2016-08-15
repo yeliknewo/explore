@@ -1,15 +1,12 @@
-use gfx_device_gl::{Factory};
-use gfx;
+use gfx_device_gl::Factory;
 use std::io::Read;
-
-use graphics::texture::{Vertex};
 
 pub fn make_square_render(renderer: &mut ::sys::render::System, factory: &mut Factory) -> ::comps::RenderType {
     let vertices = &[
-        Vertex::new([0.0, 0.0, 0.0], [1.0, 1.0]),
-        Vertex::new([0.0, 1.0, 0.0], [1.0, 0.0]),
-        Vertex::new([1.0, 1.0, 0.0], [0.0, 0.0]),
-        Vertex::new([1.0, 0.0, 0.0], [0.0, 1.0]),
+        ::graphics::texture::Vertex::new([0.0, 0.0, 0.0], [1.0, 1.0]),
+        ::graphics::texture::Vertex::new([0.0, 1.0, 0.0], [1.0, 0.0]),
+        ::graphics::texture::Vertex::new([1.0, 1.0, 0.0], [0.0, 0.0]),
+        ::graphics::texture::Vertex::new([1.0, 0.0, 0.0], [0.0, 1.0]),
     ];
 
     let indices = &[
@@ -30,7 +27,7 @@ pub fn make_square_render(renderer: &mut ::sys::render::System, factory: &mut Fa
 
     let texture = ::graphics::texture::load_texture(factory, &texture_buffer).unwrap();
 
-    let rasterizer = gfx::state::Rasterizer::new_fill().with_cull_back();
+    let rasterizer = ::gfx::state::Rasterizer::new_fill().with_cull_back();
 
     renderer.add_render_type_texture(
        factory,

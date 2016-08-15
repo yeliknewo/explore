@@ -16,3 +16,10 @@ rand = "*"
 genmesh = "*"
 image = "*"
 find_folder = "*"
+
+systems = { path="src/systems" }
+core = { path="src/core" }
+art = { path="src/art" }
+components = { path="src/components" }
+graphics = { path="src/graphics" }
+utils = { path="src/utils" }

@@ -1,30 +1,26 @@
-use std::sync::{mpsc, Arc};
-use gfx;
 use gfx::traits::{Factory, FactoryExt};
-use gfx_device_gl;
-use specs;
 
 pub type Channel = (
-    mpsc::Sender<SendEvent>,
-    mpsc::Receiver<RecvEvent>
+    ::std::sync::mpsc::Sender<SendEvent>,
+    ::std::sync::mpsc::Receiver<RecvEvent>
 );
 
 pub enum SendEvent {
-    Encoder(gfx::Encoder<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer>),
+    Encoder(::gfx::Encoder<::gfx_device_gl::Resources, ::gfx_device_gl::CommandBuffer>),
 }
 
 pub enum RecvEvent {
-    Encoder(gfx::Encoder<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer>),
-    GraphicsData(gfx::handle::RenderTargetView<gfx_device_gl::Resources, ::graphics::ColorFormat>, gfx::handle::DepthStencilView<gfx_device_gl::Resources, ::graphics::DepthFormat>),
+    Encoder(::gfx::Encoder<::gfx_device_gl::Resources, ::gfx_device_gl::CommandBuffer>),
+    GraphicsData(::gfx::handle::RenderTargetView<::gfx_device_gl::Resources, ::graphics::ColorFormat>, ::gfx::handle::DepthStencilView<::gfx_device_gl::Resources, ::graphics::DepthFormat>),
     Exit,
 }
 
 pub struct System {
     channel: Channel,
-    out_color: gfx::handle::RenderTargetView<gfx_device_gl::Resources, ::graphics::ColorFormat>,
-    out_depth: gfx::handle::DepthStencilView<gfx_device_gl::Resources, ::graphics::DepthFormat>,
-    color_bundles: Arc<Vec<::graphics::color::Bundle>>,
-    texture_bundles: Arc<Vec<::graphics::texture::Bundle>>,
+    out_color: ::gfx::handle::RenderTargetView<::gfx_device_gl::Resources, ::graphics::ColorFormat>,
+    out_depth: ::gfx::handle::DepthStencilView<::gfx_device_gl::Resources, ::graphics::DepthFormat>,
+    color_bundles: ::std::sync::Arc<Vec<::graphics::color::Bundle>>,
+    texture_bundles: ::std::sync::Arc<Vec<::graphics::texture::Bundle>>,
 }
 
 impl System {
@@ -41,23 +37,23 @@ impl System {
             channel: channel,
             out_color: out_color,
             out_depth: out_depth,
-            color_bundles: Arc::new(Vec::new()),
-            texture_bundles: Arc::new(Vec::new()),
+            color_bundles: ::std::sync::Arc::new(Vec::new()),
+            texture_bundles: ::std::sync::Arc::new(Vec::new()),
         }
     }
 
     pub fn add_render_type_color(&mut self,
-        factory: &mut gfx_device_gl::Factory,
+        factory: &mut ::gfx_device_gl::Factory,
         vertices: &[::graphics::color::Vertex],
         indices: &[::graphics::color::Index],
-        rasterizer: gfx::state::Rasterizer
+        rasterizer: ::gfx::state::Rasterizer
     ) -> ::comps::RenderType
     {
         let shader_set = factory.create_shader_set(::graphics::color::VERTEX_SHADER, ::graphics::color::FRAGMENT_SHADER).unwrap();
 
         let program = factory.create_program(&shader_set).unwrap();
 
-        let pso = factory.create_pipeline_from_program(&program, gfx::Primitive::TriangleList, rasterizer, ::graphics::color::pipe::new()).unwrap();
+        let pso = factory.create_pipeline_from_program(&program, ::gfx::Primitive::TriangleList, rasterizer, ::graphics::color::pipe::new()).unwrap();
         let (vbuf, slice) = factory.create_vertex_buffer_with_slice(vertices, indices);
         let data = ::graphics::color::pipe::Data {
             vbuf: vbuf,
@@ -66,7 +62,7 @@ impl System {
             out_depth: self.out_depth.clone(),
         };
         let id = self.color_bundles.len();
-        let mut bundles = Arc::get_mut(&mut self.color_bundles).unwrap();
+        let mut bundles = ::std::sync::Arc::get_mut(&mut self.color_bundles).unwrap();
         bundles.push(::graphics::color::Bundle::new(slice, pso, data));
         ::comps::RenderType {
             id: id,
@@ -75,18 +71,18 @@ impl System {
     }
 
     pub fn add_render_type_texture(&mut self,
-        factory: &mut gfx_device_gl::Factory,
+        factory: &mut ::gfx_device_gl::Factory,
         vertices: &[::graphics::texture::Vertex],
         indices: &[::graphics::texture::Index],
-        texture_view: gfx::handle::ShaderResourceView<gfx_device_gl::Resources, [f32; 4]>,
-        rasterizer: gfx::state::Rasterizer
+        texture_view: ::gfx::handle::ShaderResourceView<::gfx_device_gl::Resources, [f32; 4]>,
+        rasterizer: ::gfx::state::Rasterizer
     ) -> ::comps::RenderType
     {
         let shader_set = factory.create_shader_set(::graphics::texture::VERTEX_SHADER, ::graphics::texture::FRAGMENT_SHADER).unwrap();
 
         let program = factory.create_program(&shader_set).unwrap();
 
-        let pso = factory.create_pipeline_from_program(&program, gfx::Primitive::TriangleList, rasterizer, ::graphics::texture::pipe::new()).unwrap();
+        let pso = factory.create_pipeline_from_program(&program, ::gfx::Primitive::TriangleList, rasterizer, ::graphics::texture::pipe::new()).unwrap();
         let (vbuf, slice) = factory.create_vertex_buffer_with_slice(vertices, indices);
         let data = ::graphics::texture::pipe::Data {
             vbuf: vbuf,
@@ -97,7 +93,7 @@ impl System {
             out_depth: self.out_depth.clone(),
         };
         let id = self.texture_bundles.len();
-        let mut bundles = Arc::get_mut(&mut self.texture_bundles).unwrap();
+        let mut bundles = ::std::sync::Arc::get_mut(&mut self.texture_bundles).unwrap();
         bundles.push(::graphics::texture::Bundle::new(slice, pso, data));
         ::comps::RenderType {
             id: id,
@@ -105,7 +101,7 @@ impl System {
         }
     }
 
-    fn render(&mut self, arg: &specs::RunArg, mut encoder: gfx::Encoder<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer>) {
+    fn render(&mut self, arg: &::specs::RunArg, mut encoder: ::gfx::Encoder<::gfx_device_gl::Resources, ::gfx_device_gl::CommandBuffer>) {
         use specs::Join;
 
         let (draw, transform, camera, render_data) = arg.fetch(|w| {
@@ -157,27 +153,27 @@ impl System {
         let _ = self.channel.0.send(SendEvent::Encoder(encoder));
     }
 
-    fn set_graphics_data(&mut self, out_color: gfx::handle::RenderTargetView<gfx_device_gl::Resources, ::graphics::ColorFormat>, out_depth: gfx::handle::DepthStencilView<gfx_device_gl::Resources, ::graphics::DepthFormat>) {
+    fn set_graphics_data(&mut self, out_color: ::gfx::handle::RenderTargetView<::gfx_device_gl::Resources, ::graphics::ColorFormat>, out_depth: ::gfx::handle::DepthStencilView<::gfx_device_gl::Resources, ::graphics::DepthFormat>) {
         self.out_color = out_color;
         self.out_depth = out_depth;
 
-        for bundle in Arc::get_mut(&mut self.color_bundles).unwrap() {
+        for bundle in ::std::sync::Arc::get_mut(&mut self.color_bundles).unwrap() {
             bundle.data.out_color = self.out_color.clone();
             bundle.data.out_depth = self.out_depth.clone();
         }
-        for bundle in Arc::get_mut(&mut self.texture_bundles).unwrap() {
+        for bundle in ::std::sync::Arc::get_mut(&mut self.texture_bundles).unwrap() {
             bundle.data.out_color = self.out_color.clone();
             bundle.data.out_depth = self.out_depth.clone();
         }
     }
 
-    fn exit(&mut self, arg: &specs::RunArg) {
+    fn exit(&mut self, arg: &::specs::RunArg) {
         //use to save
 
         arg.fetch(|_| ());
     }
 
-    fn process_event(&mut self, arg: &specs::RunArg, event: RecvEvent) -> bool {
+    fn process_event(&mut self, arg: &::specs::RunArg, event: RecvEvent) -> bool {
         match event {
             RecvEvent::Encoder(encoder) => {
                 self.render(arg, encoder);
@@ -195,8 +191,8 @@ impl System {
     }
 }
 
-impl specs::System<::Delta> for System {
-    fn run(&mut self, arg: specs::RunArg, _: ::Delta) {
+impl ::specs::System<::utils::Delta> for System {
+    fn run(&mut self, arg: ::specs::RunArg, _: ::utils::Delta) {
         let mut event = self.channel.1.recv().unwrap();
         while self.process_event(&arg, event) {
             event = self.channel.1.recv().unwrap();

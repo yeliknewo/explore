@@ -1,7 +1,9 @@
-use gfx;
-use gfx_device_gl;
-use glutin;
-use gfx_window_glutin;
+#[macro_use]
+extern crate gfx;
+extern crate gfx_device_gl;
+extern crate glutin;
+extern crate gfx_window_glutin;
+extern crate image;
 
 pub mod color;
 pub mod texture;
