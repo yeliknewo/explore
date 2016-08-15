@@ -8,3 +8,5 @@ specs = "*"
 nalgebra = "*"
 
 graphics = { path="../graphics" }
+utils = { path="../utils" }
+math = { path="../math" }

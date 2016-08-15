@@ -7,6 +7,7 @@ dependencies = [
  "gfx_device_gl 0.11.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "glutin 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "graphics 0.1.0",
+ "math 0.1.0",
  "nalgebra 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "specs 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "utils 0.1.0",
@@ -72,8 +73,10 @@ name = "components"
 version = "0.1.0"
 dependencies = [
  "graphics 0.1.0",
+ "math 0.1.0",
  "nalgebra 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "specs 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "utils 0.1.0",
 ]
 
 [[package]]
@@ -314,6 +317,7 @@ dependencies = [
  "gfx_window_glutin 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "glutin 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "image 0.10.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "utils 0.1.0",
 ]
 
 [[package]]
@@ -409,6 +413,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "libc 0.2.15 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "math"
+version = "0.1.0"
 
 [[package]]
 name = "memmap"

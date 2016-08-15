@@ -6,6 +6,8 @@ extern crate gfx_window_glutin;
 extern crate image;
 extern crate find_folder;
 
+extern crate utils;
+
 use std::io::Read;
 
 pub mod color;

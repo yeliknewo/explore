@@ -1,11 +1,9 @@
-use specs;
-
 pub struct RenderData {
     texture_data: Option<TextureData>,
 }
 
-impl specs::Component for RenderData {
-    type Storage = specs::VecStorage<RenderData>;
+impl ::specs::Component for RenderData {
+    type Storage = ::specs::VecStorage<RenderData>;
 }
 
 impl RenderData {
@@ -15,6 +13,10 @@ impl RenderData {
                 tint: tint,
             }),
         }
+    }
+
+    pub fn set_tint(&mut self, tint: [f32; 4]) {
+        self.texture_data.as_mut().unwrap().tint = tint;
     }
 
     pub fn get_tint(&self) -> [f32; 4] {

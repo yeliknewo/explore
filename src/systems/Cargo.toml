@@ -13,3 +13,4 @@ nalgebra = "*"
 graphics = { path="../graphics" }
 utils = { path="../utils" }
 components = { path="../components" }
+math = { path="../math" }

@@ -11,6 +11,7 @@ extern crate systems as sys;
 extern crate utils;
 extern crate components as comps;
 extern crate graphics;
+extern crate math;
 
 pub mod event;
 pub mod game;
@@ -27,7 +28,7 @@ where F: for<'a> Fn(&'a mut specs::Planner<::utils::Delta>, &'a mut sys::render:
     event_dev.send_to_render(sys::render::RecvEvent::Encoder(encoder.clone_empty()));
     event_dev.send_to_render(sys::render::RecvEvent::Encoder(encoder));
 
-    let game = game::Game::new(&mut factory, game_event, setup);
+    let game = game::Game::new(&mut factory, game_event, ::math::Point2::new(out_color.get_dimensions().0 as f32, out_color.get_dimensions().1 as f32), setup);
 
     std::thread::spawn(|| {
         let mut game = game;

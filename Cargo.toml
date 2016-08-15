@@ -6,9 +6,7 @@ authors = ["Kiley Owen <yelikdev@gmail.com>"]
 [dependencies]
 nalgebra = "*"
 
-systems = { path="src/systems" }
 core = { path="src/core" }
 art = { path="src/art" }
 components = { path="src/components" }
-graphics = { path="src/graphics" }
-utils = { path="src/utils" }
+math = { path="src/math" }

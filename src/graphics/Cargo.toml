@@ -10,3 +10,5 @@ glutin = "*"
 gfx_window_glutin = "*"
 image = "*"
 find_folder = "*"
+
+utils = { path="../utils" }

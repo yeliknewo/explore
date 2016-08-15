@@ -1,11 +1,9 @@
 extern crate nalgebra;
 
-extern crate systems as sys;
-extern crate graphics;
 extern crate core;
 extern crate art;
 extern crate components as comps;
-extern crate utils;
+extern crate math;
 
 fn main() {
     core::start(|planner, renderer, factory| {
@@ -39,6 +37,7 @@ fn main() {
                         ((x + 10) as f32 / 20.0 + (y + 10) as f32 / 20.0) / 2.0,
                         1.0
                     ]))
+                    .with(comps::Clickable::new(::math::Rect::new_from_coords(0.0, 0.0, 1.0, 1.0)))
                     .build();
             }
         }

@@ -7,6 +7,7 @@ extern crate nalgebra;
 extern crate graphics;
 extern crate utils;
 extern crate components as comps;
+extern crate math;
 
 pub mod control;
 pub mod render;

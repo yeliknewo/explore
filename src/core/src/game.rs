@@ -18,6 +18,7 @@ impl Game {
     pub fn new<F>(
         factory: &mut ::gfx_device_gl::Factory,
         mut game_event_hub: ::event::GameEventHub,
+        screen_size: ::math::Point2,
         setup: F,
     ) -> Game
     where F: for<'a> Fn(&'a mut ::specs::Planner<::utils::Delta>, &'a mut ::sys::render::System, &'a mut ::gfx_device_gl::Factory)
@@ -29,6 +30,7 @@ impl Game {
             w.register::<::comps::Transform>();
             w.register::<::comps::Camera>();
             w.register::<::comps::RenderData>();
+            w.register::<::comps::Clickable>();
 
             ::specs::Planner::<::utils::Delta>::new(w, 4)
         };
@@ -38,7 +40,7 @@ impl Game {
         setup(&mut planner, &mut renderer, factory);
 
         planner.add_system(renderer, "renderer", 10);
-        planner.add_system(::sys::control::System::new(game_event_hub.control_channel.take().unwrap(), (10.0, 10.0)), "control", 30);
+        planner.add_system(::sys::control::System::new(game_event_hub.control_channel.take().unwrap(), (10.0, 10.0), screen_size), "control", 30);
 
         Game {
             planner: planner,
@@ -59,7 +61,7 @@ impl Game {
             Err(::std::sync::mpsc::TryRecvError::Empty) => {
                 if self.current_fps_delta > self.target_fps_delta {
                     self.planner.dispatch(self.current_fps_delta);
-                    println!("Estimated FPS: {}", self.current_fps_delta * 60.0 * 60.0);
+                    // println!("Estimated FPS: {}", self.current_fps_delta * 60.0 * 60.0);
                     self.current_fps_delta = 0.0;
                 } else {
                     ::std::thread::sleep(::std::time::Duration::new(0, ((self.target_fps_delta - self.current_fps_delta* 0.99) * 1e9) as u32));
