@@ -3,15 +3,24 @@ use specs;
 use nalgebra;
 use time;
 use std;
+use std::sync::mpsc;
 
 use {GameEventHub};
+
+pub type Channel = (
+    mpsc::Receiver<RecvEvent>
+);
+
+pub enum RecvEvent {
+    Exit,
+}
 
 pub struct Game {
     planner: specs::Planner<::Delta>,
     last_time: u64,
-    player: specs::Entity,
     target_fps_delta: ::Delta,
     current_fps_delta: ::Delta,
+    channel: Channel,
 }
 
 impl Game {
@@ -33,7 +42,7 @@ impl Game {
         let mut renderer = ::sys::render::System::new(game_event_hub.render_channel.take().unwrap());
 
         let tile_render = ::art::make_square_render(&mut renderer, factory);
-        let player = planner.mut_world().create_now()
+        planner.mut_world().create_now()
             .with(::comps::Camera::new(
                 nalgebra::Point3::new(0.0, 0.0, 2.0),
                 nalgebra::Point3::new(0.0, 0.0, 0.0),
@@ -63,9 +72,9 @@ impl Game {
         Game {
             planner: planner,
             last_time: time::precise_time_ns(),
-            player: player,
             target_fps_delta: 1.0 / 60.0,
             current_fps_delta: 0.0,
+            channel: game_event_hub.game_channel.take().unwrap(),
         }
     }
 
@@ -74,12 +83,25 @@ impl Game {
         let delta = (new_time - self.last_time) as ::Delta / 1e9;
         self.current_fps_delta += delta;
         self.last_time = new_time;
-        if self.current_fps_delta > self.target_fps_delta {
-            self.planner.dispatch(self.current_fps_delta);
-            self.current_fps_delta = 0.0;
+
+        match self.channel.try_recv() {
+            Ok(RecvEvent::Exit) => {
+                self.planner.wait();
+                false
+            },
+            Err(mpsc::TryRecvError::Empty) => {
+                if self.current_fps_delta > self.target_fps_delta {
+                    self.planner.dispatch(self.current_fps_delta);
+                    self.current_fps_delta = 0.0;
+                } else {
+                    std::thread::sleep(std::time::Duration::new(0, ((self.target_fps_delta - self.current_fps_delta* 0.99) * 1e9) as u32));
+                }
+                true
+            },
+            Err(mpsc::TryRecvError::Disconnected) => {
+                self.planner.wait();
+                false
+            },
         }
-        std::thread::sleep(std::time::Duration::new(0, ((self.target_fps_delta - self.current_fps_delta* 0.99) * 1e9) as u32));
-        // self.planner.wait();
-        self.planner.mut_world().is_alive(self.player)
     }
 }

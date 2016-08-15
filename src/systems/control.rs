@@ -13,6 +13,7 @@ pub enum RecvEvent {
     Up(bool),
     Down(bool),
     Resize(u32, u32),
+    Exit,
 }
 
 pub enum SendEvent {
@@ -85,6 +86,9 @@ impl System {
                         self.channel.0.send(SendEvent::Resize).unwrap();
                         self.resize = Some((width, height));
                     },
+                    RecvEvent::Exit => {
+                        //use to save
+                    }
                 },
                 Err(_) => return,
             }

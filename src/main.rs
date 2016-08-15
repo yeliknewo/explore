@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate gfx;
 // extern crate gfx_core;
+extern crate gfx_core;
 extern crate gfx_device_gl;
 extern crate gfx_window_glutin;
 extern crate glutin;
@@ -11,6 +12,7 @@ extern crate time;
 mod art;
 mod game;
 mod event;
+mod graphics;
 
 pub mod systems;
 
@@ -42,7 +44,6 @@ fn main() {
         while game.frame() {}
     });
 
-
     'main: loop {
         match event_dev.recv_from_render() {
             sys::render::SendEvent::Encoder(mut encoder) => {
@@ -72,4 +73,8 @@ fn main() {
             }
         }
     }
+
+    event_dev.send_to_render(sys::render::RecvEvent::Exit);
+    event_dev.send_to_control(sys::control::RecvEvent::Exit);
+    event_dev.send_to_game(game::RecvEvent::Exit);
 }

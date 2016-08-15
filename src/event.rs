@@ -4,16 +4,19 @@ use glutin;
 pub struct GameEventHub {
     pub control_channel: Option<::sys::control::Channel>,
     pub render_channel: Option<::sys::render::Channel>,
+    pub game_channel: Option<::game::Channel>,
 }
 
 impl GameEventHub {
     pub fn new(
         control_channel: (mpsc::Sender<::sys::control::SendEvent>, mpsc::Receiver<::sys::control::RecvEvent>),
-        render_channel: (mpsc::Sender<::sys::render::SendEvent>, mpsc::Receiver<::sys::render::RecvEvent>)
+        render_channel: (mpsc::Sender<::sys::render::SendEvent>, mpsc::Receiver<::sys::render::RecvEvent>),
+        game_channel: mpsc::Receiver<::game::RecvEvent>,
     ) -> GameEventHub {
         GameEventHub {
             control_channel: Some(control_channel),
             render_channel: Some(render_channel),
+            game_channel: Some(game_channel),
         }
     }
 }
@@ -23,22 +26,25 @@ pub struct DevEventHub {
     recv_from_control: mpsc::Receiver<::sys::control::SendEvent>,
     send_to_render: mpsc::Sender<::sys::render::RecvEvent>,
     recv_from_render: mpsc::Receiver<::sys::render::SendEvent>,
+    send_to_game: mpsc::Sender<::game::RecvEvent>,
 }
 
 impl DevEventHub{
     pub fn new() -> (DevEventHub, GameEventHub) {
         // let (s###, r###) = mpsc::channel();
 
-        let (send_to_control, recv_from_control) = mpsc::channel();
-        let (send_from_control, recv_to_control) = mpsc::channel();
-        let (send_to_render, recv_from_render) = mpsc::channel();
-        let (send_from_render, recv_to_render) = mpsc::channel();
+        let (send_to_control, recv_to_control) = mpsc::channel();
+        let (send_from_control, recv_from_control) = mpsc::channel();
+        let (send_to_render, recv_to_render) = mpsc::channel();
+        let (send_from_render, recv_from_render) = mpsc::channel();
+        let (send_to_game, recv_to_game) = mpsc::channel();
         (
             DevEventHub::new_internal(
-                send_to_control, recv_to_control,
-                send_to_render, recv_to_render
+                send_to_control, recv_from_control,
+                send_to_render, recv_from_render,
+                send_to_game
             ),
-            GameEventHub::new((send_from_control, recv_from_control), (send_from_render, recv_from_render))
+            GameEventHub::new((send_from_control, recv_to_control), (send_from_render, recv_to_render), recv_to_game)
         )
     }
 
@@ -46,7 +52,8 @@ impl DevEventHub{
         send_to_control: mpsc::Sender<::sys::control::RecvEvent>,
         recv_from_control: mpsc::Receiver<::sys::control::SendEvent>,
         send_to_render: mpsc::Sender<::sys::render::RecvEvent>,
-        recv_from_render: mpsc::Receiver<::sys::render::SendEvent>
+        recv_from_render: mpsc::Receiver<::sys::render::SendEvent>,
+        send_to_game: mpsc::Sender<::game::RecvEvent>,
     ) -> DevEventHub
     {
         DevEventHub {
@@ -54,6 +61,7 @@ impl DevEventHub{
             recv_from_control: recv_from_control,
             send_to_render: send_to_render,
             recv_from_render: recv_from_render,
+            send_to_game: send_to_game,
         }
     }
 
@@ -75,6 +83,10 @@ impl DevEventHub{
 
     pub fn recv_from_render(&mut self) -> ::sys::render::SendEvent {
         self.recv_from_render.recv().unwrap()
+    }
+
+    pub fn send_to_game(&mut self, event: ::game::RecvEvent) {
+        self.send_to_game.send(event).unwrap();
     }
 
     pub fn process_glutin(&mut self, event: glutin::Event) {
