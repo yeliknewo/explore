@@ -4,7 +4,6 @@ version = "0.1.0"
 authors = ["Kiley Owen <yelikdev@gmail.com>"]
 
 [dependencies]
-gfx_core = "*"
 gfx = "*"
 gfx_device_gl = "*"
 gfx_window_glutin = "*"
@@ -16,3 +15,4 @@ time = "*"
 rand = "*"
 genmesh = "*"
 image = "*"
+find_folder = "*"

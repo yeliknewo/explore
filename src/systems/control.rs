@@ -13,6 +13,8 @@ pub enum RecvEvent {
     Up(bool),
     Down(bool),
     Resize(u32, u32),
+    MouseMoved(u32, u32),
+    MouseInput(bool, ::glutin::MouseButton),
     Exit,
 }
 
@@ -33,6 +35,8 @@ pub struct System {
     move_v: Sign,
     move_speed_mult: (f32, f32),
     resize: Option<(u32, u32)>,
+    mouse_x: u32,
+    mouse_y: u32,
 }
 
 impl System {
@@ -47,6 +51,8 @@ impl System {
             move_v: Sign::Zero,
             move_speed_mult: move_speed_mult,
             resize: None,
+            mouse_x: 0,
+            mouse_y: 0,
         }
     }
 
@@ -54,6 +60,13 @@ impl System {
         loop {
             match self.channel.1.try_recv() {
                 Ok(event) => match event {
+                    RecvEvent::MouseMoved(x, y) => {
+                        self.mouse_x = x;
+                        self.mouse_y = y;
+                    },
+                    RecvEvent::MouseInput(pressed, mouse_button) => {
+
+                    },
                     RecvEvent::Right(pressed) => {
                         if pressed {
                             self.move_h = Sign::Pos;

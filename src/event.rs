@@ -90,10 +90,16 @@ impl DevEventHub{
     }
 
     pub fn process_glutin(&mut self, event: glutin::Event) {
-        use glutin::Event::{Resized, KeyboardInput};
+        use glutin::Event::{Resized, KeyboardInput, MouseMoved, MouseInput};
         use glutin::{ElementState, VirtualKeyCode};
 
         match event {
+            MouseMoved(x, y) => self.send_to_control.send(::sys::control::RecvEvent::MouseMoved(x as u32, y as u32)).unwrap(),
+            MouseInput(state, button) => self.send_to_control.send(::sys::control::RecvEvent::MouseInput(match state {
+                ElementState::Pressed => true,
+                ElementState::Released => false,
+            },
+            button)).unwrap(),
             KeyboardInput(state, _, Some(VirtualKeyCode::D)) |
             KeyboardInput(state, _, Some(VirtualKeyCode::Right)) => match state {
                 ElementState::Pressed => self.send_to_control.send(::sys::control::RecvEvent::Right(true)).unwrap(),
