@@ -1,10 +1,21 @@
+use gfx;
+use gfx_device_gl;
+use glutin;
+use gfx_window_glutin;
+
 pub mod color;
 pub mod texture;
 
 pub type ColorFormat = gfx::format::Rgba8;
 pub type DepthFormat = gfx::format::DepthStencil;
 
-pub fn build_graphics() -> (
+#[derive(Copy, Clone, Hash, PartialEq)]
+pub enum RendererType {
+    Color,
+    Texture,
+}
+
+pub fn build_graphics(width: u32, height: u32) -> (
     (gfx::handle::RenderTargetView<gfx_device_gl::Resources, ColorFormat>, gfx::handle::DepthStencilView<gfx_device_gl::Resources, DepthFormat>),
     gfx_device_gl::Factory,
     gfx::Encoder<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer>,
@@ -13,7 +24,7 @@ pub fn build_graphics() -> (
 ) {
     let builder = glutin::WindowBuilder::new()
         .with_title("Explore")
-        .with_dimensions(1024, 768)
+        .with_dimensions(width, height)
         .with_vsync()
     ;
 
@@ -32,3 +43,11 @@ pub fn build_graphics() -> (
         device
     )
 }
+
+gfx_constant_struct!(
+    ProjectionData {
+        model: [[f32; 4]; 4] = "u_Model",
+        view: [[f32; 4]; 4] = "u_View",
+        proj: [[f32; 4]; 4] = "u_Proj",
+    }
+);

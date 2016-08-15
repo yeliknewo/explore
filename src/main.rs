@@ -8,6 +8,7 @@ extern crate glutin;
 extern crate nalgebra;
 extern crate specs;
 extern crate time;
+extern crate image;
 
 mod art;
 mod game;
@@ -22,13 +23,13 @@ pub mod components;
 
 pub use ::components as comps;
 
-pub use sys::render::{Vertex, Index, ColorFormat, DepthFormat};
+pub use graphics::{ColorFormat, DepthFormat};
 pub use event::{GameEventHub, DevEventHub};
 
 pub type Delta = f32;
 
 fn main() {
-    let ((mut out_color, mut out_depth), mut factory, encoder, window, mut device) = sys::render::build_graphics();
+    let ((mut out_color, mut out_depth), mut factory, encoder, window, mut device) = graphics::build_graphics(640, 480);
 
     let (mut event_dev, game_event) = DevEventHub::new();
 

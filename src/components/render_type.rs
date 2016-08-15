@@ -1,7 +1,10 @@
 use specs;
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash)]
-pub struct RenderType(pub usize);
+#[derive(Copy, Clone, PartialEq, Hash)]
+pub struct RenderType {
+    pub id: usize,
+    pub renderer_type: ::graphics::RendererType,
+}
 
 impl specs::Component for RenderType {
     type Storage = specs::VecStorage<RenderType>;

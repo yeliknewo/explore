@@ -1,19 +1,8 @@
 use std::sync::{mpsc, Arc};
 use gfx;
-use gfx_core;
 use gfx::traits::{Factory, FactoryExt};
 use gfx_device_gl;
-use gfx_window_glutin;
-use glutin;
 use specs;
-
-trait BundleTrait {
-    fn encode(&self, encoder: &mut gfx::Encoder<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer>);
-}
-
-trait DataMaker<D: gfx::pso::PipelineData<gfx_device_gl::Resources>, V> {
-    fn make_data(&self, vbuf: gfx::VertexBuffer<V>) -> D;
-}
 
 pub type Channel = (
     mpsc::Sender<SendEvent>,
@@ -34,7 +23,8 @@ pub struct System {
     channel: Channel,
     out_color: gfx::handle::RenderTargetView<gfx_device_gl::Resources, ::graphics::ColorFormat>,
     out_depth: gfx::handle::DepthStencilView<gfx_device_gl::Resources, ::graphics::DepthFormat>,
-    bundles: Arc<Vec<Box<BundleTrait>>>,
+    color_bundles: Arc<Vec<::graphics::color::Bundle>>,
+    texture_bundles: Arc<Vec<::graphics::texture::Bundle>>,
 }
 
 impl System {
@@ -51,108 +41,78 @@ impl System {
             channel: channel,
             out_color: out_color,
             out_depth: out_depth,
-            bundles: Arc::new(Vec::new()),
+            color_bundles: Arc::new(Vec::new()),
+            texture_bundles: Arc::new(Vec::new()),
         }
     }
 
-    // pub fn add_render_type(&mut self,
-    //     factory: &mut gfx_device_gl::Factory,
-    //     vertices: &[Vertex],
-    //     indices: &[Index]
-    // ) -> ::comps::RenderType
-    // {
-    //     let pso = factory.create_pipeline_simple (
-    //         VERTEX_SHADER,
-    //         FRAGMENT_SHADER,
-    //         pipe::new()
-    //     ).unwrap();
-    //     let (vbuf, slice) = factory.create_vertex_buffer_with_slice(vertices, indices);
-    //     let data = pipe::Data {
-    //         vbuf: vbuf,
-    //         projection_cb: factory.create_constant_buffer(1),
-    //         out_color: self.out_color.clone(),
-    //         out_depth: self.out_depth.clone(),
-    //     };
-    //     let id = self.bundles.len();
-    //     let mut bundles = Arc::get_mut(&mut self.bundles).unwrap();
-    //     bundles.push(Bundle::new(slice, pso, data));
-    //     ::comps::RenderType(id)
-    // }
-
-
-
-    ///EXPERIMENTAL
-
-    pub fn add_render_type_generic<P: gfx::pso::PipelineInit, V, I, B: BundleTrait>(&mut self,
+    pub fn add_render_type_color(&mut self,
         factory: &mut gfx_device_gl::Factory,
-        vertices: Box<&[V]>,
-        indices: Box<&[I]>,
-        vertex_shader: &[u8],
-        fragment_shader: &[u8],
-        primitive: gfx::Primitive,
-        rasterizer: gfx::state::Rasterizer,
-        data_maker: Box<DataMaker<gfx::pso::PipelineData<gfx_device_gl::Resources>, V>>
+        vertices: &[::graphics::color::Vertex],
+        indices: &[::graphics::color::Index],
+        rasterizer: gfx::state::Rasterizer
     ) -> ::comps::RenderType
     {
-        let shader_set = factory.create_shader_set(vertex_shader, fragment_shader).unwrap();
+        let shader_set = factory.create_shader_set(::graphics::color::VERTEX_SHADER, ::graphics::color::FRAGMENT_SHADER).unwrap();
 
         let program = factory.create_program(&shader_set).unwrap();
 
-        let pso = factory.create_pipeline_from_program(&program, primitive, rasterizer, P::new()).unwrap();
-
+        let pso = factory.create_pipeline_from_program(&program, gfx::Primitive::TriangleList, rasterizer, ::graphics::color::pipe::new()).unwrap();
         let (vbuf, slice) = factory.create_vertex_buffer_with_slice(vertices, indices);
-
-        let data = data_maker.make_data(vbuf);
-
-        let id = self.bundles.len();
-        let mut bundles = Arc::get_mut(&mut self.bundles).unwrap();
-        bundles.push(DataMaker::new_bundle(slice, pso, data));
-        ::comps::RenderType(id)
+        let data = ::graphics::color::pipe::Data {
+            vbuf: vbuf,
+            projection_cb: factory.create_constant_buffer(1),
+            out_color: self.out_color.clone(),
+            out_depth: self.out_depth.clone(),
+        };
+        let id = self.color_bundles.len();
+        let mut bundles = Arc::get_mut(&mut self.color_bundles).unwrap();
+        bundles.push(::graphics::color::Bundle::new(slice, pso, data));
+        ::comps::RenderType {
+            id: id,
+            renderer_type: ::graphics::RendererType::Color,
+        }
     }
 
-    // pub fn add_render_type_complex(&mut self,
-    //     factory: &mut gfx_device_gl::Factory,
-    //     vertices: &[color::Vertex],
-    //     indices: &[color::Index],
-    //     rasterizer: gfx::state::Rasterizer
-    // ) -> ::comps::RenderType
-    // {
-    //     let shader_set = factory.create_shader_set(VERTEX_SHADER, FRAGMENT_SHADER).unwrap();
-    //
-    //     let program = factory.create_program(&shader_set).unwrap();
-    //
-    //     let pso = factory.create_pipeline_from_program(&program, gfx::Primitive::TriangleList, rasterizer, pipe::new()).unwrap();
-    //     let (vbuf, slice) = factory.create_vertex_buffer_with_slice(vertices, indices);
-    //     let data = pipe::Data {
-    //         vbuf: vbuf,
-    //         projection_cb: factory.create_constant_buffer(1),
-    //         out_color: self.out_color.clone(),
-    //         out_depth: self.out_depth.clone(),
-    //     };
-    //     let id =self.bundles.len();
-    //     let mut bundles = Arc::get_mut(&mut self.bundles).unwrap();
-    //     bundles.push(Bundle::new(slice, pso, data));
-    //     ::comps::RenderType(id)
-    // }
+    pub fn add_render_type_texture(&mut self,
+        factory: &mut gfx_device_gl::Factory,
+        vertices: &[::graphics::texture::Vertex],
+        indices: &[::graphics::texture::Index],
+        texture_view: gfx::handle::ShaderResourceView<gfx_device_gl::Resources, [f32; 4]>,
+        rasterizer: gfx::state::Rasterizer
+    ) -> ::comps::RenderType
+    {
+        let shader_set = factory.create_shader_set(::graphics::texture::VERTEX_SHADER, ::graphics::texture::FRAGMENT_SHADER).unwrap();
 
-    // pub fn add_render_type_texture(&mut self,
-    //     factory: &mut gfx_device_gl::Factory,
-    //     vertices: &[texture::Vertex],
-    //     indices: &[texture::Index],
-    //     rasterizer: gfx::state::Rasterizer
-    // ) -> ::comps::RenderType
-    // {
-    //
-    // }
+        let program = factory.create_program(&shader_set).unwrap();
+
+        let pso = factory.create_pipeline_from_program(&program, gfx::Primitive::TriangleList, rasterizer, ::graphics::texture::pipe::new()).unwrap();
+        let (vbuf, slice) = factory.create_vertex_buffer_with_slice(vertices, indices);
+        let data = ::graphics::texture::pipe::Data {
+            vbuf: vbuf,
+            texture: (texture_view, factory.create_sampler_linear()),
+            texture_data: factory.create_constant_buffer(1),
+            projection_cb: factory.create_constant_buffer(1),
+            out_color: self.out_color.clone(),
+            out_depth: self.out_depth.clone(),
+        };
+        let id = self.texture_bundles.len();
+        let mut bundles = Arc::get_mut(&mut self.texture_bundles).unwrap();
+        bundles.push(::graphics::texture::Bundle::new(slice, pso, data));
+        ::comps::RenderType {
+            id: id,
+            renderer_type: ::graphics::RendererType::Texture,
+        }
+    }
 
     fn render(&mut self, arg: &specs::RunArg, mut encoder: gfx::Encoder<gfx_device_gl::Resources, gfx_device_gl::CommandBuffer>) {
         use specs::Join;
 
-        let (draw, transform, camera) = arg.fetch(|w| {
-            (w.read::<::comps::RenderType>(), w.read::<::comps::Transform>(), w.read::<::comps::Camera>())
+        let (draw, transform, camera, render_data) = arg.fetch(|w| {
+            (w.read::<::comps::RenderType>(), w.read::<::comps::Transform>(), w.read::<::comps::Camera>(), w.read::<::comps::RenderData>())
         });
 
-        encoder.clear(&self.out_color, [0.1, 0.1, 0.1, 1.0]);
+        encoder.clear(&self.out_color, [0.0, 0.0, 0.0, 1.0]);
         encoder.clear_depth(&self.out_depth, 1.0);
 
         let (view, proj) = {
@@ -169,15 +129,29 @@ impl System {
             (camera.get_view(), camera.get_proj())
         };
 
-        for (d, t) in (&draw, &transform).iter() {
-            // let projection_data = ProjectionData {
-            //     model: t.get_model(),
-            //     view: view,
-            //     proj: proj,
-            // };
-            let b = &self.bundles[d.0];
-            // encoder.update_constant_buffer(&b.data.projection_cb, &projection_data);
-            b.encode(&mut encoder);
+        for (d, t, render_data) in (&draw, &transform, &render_data).iter() {
+            let projection_data = ::graphics::ProjectionData {
+                model: t.get_model(),
+                view: view,
+                proj: proj,
+            };
+            match d.renderer_type {
+                ::graphics::RendererType::Color => {
+                    let b = &self.color_bundles[d.id];
+                    encoder.update_constant_buffer(&b.data.projection_cb, &projection_data);
+                    b.encode(&mut encoder);
+                }
+                ::graphics::RendererType::Texture => {
+                    let b = &self.texture_bundles[d.id];
+                    encoder.update_constant_buffer(&b.data.projection_cb, &projection_data);
+                    let texture_data = ::graphics::texture::TextureData {
+                        tint: render_data.get_tint(),
+                    };
+                    encoder.update_constant_buffer(&b.data.texture_data, &texture_data);
+                    b.encode(&mut encoder);
+                },
+            }
+
         }
 
         let _ = self.channel.0.send(SendEvent::Encoder(encoder));
@@ -187,8 +161,13 @@ impl System {
         self.out_color = out_color;
         self.out_depth = out_depth;
 
-        for bundle in Arc::get_mut(&mut self.bundles).unwrap() {
-            bundle.update_data(self.out_color.clone(), self.out_depth.clone());
+        for bundle in Arc::get_mut(&mut self.color_bundles).unwrap() {
+            bundle.data.out_color = self.out_color.clone();
+            bundle.data.out_depth = self.out_depth.clone();
+        }
+        for bundle in Arc::get_mut(&mut self.texture_bundles).unwrap() {
+            bundle.data.out_color = self.out_color.clone();
+            bundle.data.out_depth = self.out_depth.clone();
         }
     }
 
