@@ -1,7 +1,8 @@
 pub type Index = u32;
 
-pub const VERTEX_SHADER: &'static [u8] = include_bytes!("shader/texture_150_v.glsl");
-pub const FRAGMENT_SHADER: &'static [u8] = include_bytes!("shader/texture_150_f.glsl");
+pub fn make_shaders() -> ::Shaders {
+    ::Shaders::new("texture_150_v.glsl", "texture_150_f.glsl")
+}
 
 gfx_defines! {
     vertex Vertex {
@@ -71,4 +72,45 @@ impl Bundle {
     pub fn encode(&self, encoder: &mut ::gfx::Encoder<::gfx_device_gl::Resources, ::gfx_device_gl::CommandBuffer>) {
         encoder.draw(&self.slice, &self.pso, &self.data);
     }
+}
+
+pub struct Packet {
+    vertices: Vec<Vertex>,
+    indices: Vec<Index>,
+    texture: Option<::gfx::handle::ShaderResourceView<::gfx_device_gl::Resources, [f32; 4]>>,
+    rasterizer: ::gfx::state::Rasterizer,
+}
+
+impl Packet {
+    pub fn new(
+        vertices: Vec<Vertex>,
+        indices: Vec<Index>,
+        texture: ::gfx::handle::ShaderResourceView<::gfx_device_gl::Resources, [f32; 4]>,
+        rasterizer: ::gfx::state::Rasterizer
+    ) -> Packet {
+        Packet {
+            vertices: vertices,
+            indices: indices,
+            texture: Some(texture),
+            rasterizer: rasterizer,
+        }
+    }
+
+    pub fn get_vertices(&self) -> &[Vertex] {
+        self.vertices.as_slice()
+    }
+
+    pub fn get_indices(&self) -> &[Index] {
+        self.indices.as_slice()
+    }
+
+    pub fn get_rasterizer(&self) -> ::gfx::state::Rasterizer {
+        self.rasterizer
+    }
+
+    pub fn get_texture(&mut self) -> ::gfx::handle::ShaderResourceView<::gfx_device_gl::Resources, [f32; 4]> {
+        self.texture.take().unwrap()
+    }
+
+
 }

@@ -9,7 +9,18 @@ extern crate utils;
 
 fn main() {
     core::start(|planner, renderer, factory| {
-        let square_render = ::art::make_square_render(renderer, factory);
+        planner.mut_world().create_now()
+            .with(::comps::Camera::new(
+                ::nalgebra::Point3::new(0.0, 0.0, 2.0),
+                ::nalgebra::Point3::new(0.0, 0.0, 0.0),
+                ::nalgebra::Vector3::new(0.0, 1.0, 0.0),
+                ::nalgebra::OrthographicMatrix3::new_with_fov(4.0 / 3.0, 90.0, 0.01, 10.0)
+            ))
+            .build();
+
+        let square_packet = ::art::make_square_render(factory);
+
+        let square_render = renderer.add_render_type_texture(factory, square_packet);
 
         for y in -10..10i32 {
             for x in -10..10i32 {

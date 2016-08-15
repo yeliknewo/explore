@@ -4,12 +4,57 @@ extern crate gfx_device_gl;
 extern crate glutin;
 extern crate gfx_window_glutin;
 extern crate image;
+extern crate find_folder;
+
+use std::io::Read;
 
 pub mod color;
 pub mod texture;
 
 pub type ColorFormat = gfx::format::Rgba8;
 pub type DepthFormat = gfx::format::DepthStencil;
+
+pub struct Shaders {
+    vertex: Vec<u8>,
+    fragment: Vec<u8>,
+}
+
+impl Shaders {
+    pub fn new(vertex_name: &'static str, fragment_name: &'static str) -> Shaders {
+        let shaders_path = ::find_folder::Search::ParentsThenKids(3, 3).for_folder("shader").unwrap();
+
+        let mut vertex_path = shaders_path.clone();
+        let mut fragment_path = shaders_path.clone();
+
+        vertex_path.push(vertex_name);
+        fragment_path.push(fragment_name);
+
+        let vertex_file = ::std::fs::File::open(vertex_path).unwrap();
+        let fragment_file = ::std::fs::File::open(fragment_path).unwrap();
+
+        let mut vertex_reader = ::std::io::BufReader::new(vertex_file);
+        let mut fragment_reader = ::std::io::BufReader::new(fragment_file);
+
+        let mut vertex_buffer = vec!();
+        let mut fragment_buffer = vec!();
+
+        vertex_reader.read_to_end(&mut vertex_buffer).unwrap();
+        fragment_reader.read_to_end(&mut fragment_buffer).unwrap();
+
+        Shaders {
+            vertex: vertex_buffer,
+            fragment: fragment_buffer,
+        }
+    }
+
+    pub fn get_vertex_shader(&self) -> &[u8] {
+        self.vertex.as_slice()
+    }
+
+    pub fn get_fragment_shader(&self) -> &[u8] {
+        self.fragment.as_slice()
+    }
+}
 
 #[derive(Copy, Clone, Hash, PartialEq)]
 pub enum RendererType {

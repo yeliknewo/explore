@@ -20,12 +20,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "art"
 version = "0.1.0"
 dependencies = [
- "components 0.1.0",
  "find_folder 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "gfx 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "gfx_device_gl 0.11.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "graphics 0.1.0",
- "systems 0.1.0",
 ]
 
 [[package]]
@@ -337,6 +335,7 @@ dependencies = [
 name = "graphics"
 version = "0.1.0"
 dependencies = [
+ "find_folder 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "gfx 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "gfx_device_gl 0.11.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "gfx_window_glutin 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",

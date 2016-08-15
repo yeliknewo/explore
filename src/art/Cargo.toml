@@ -8,6 +8,4 @@ gfx = "*"
 gfx_device_gl = "*"
 find_folder = "*"
 
-systems =  { path="../systems" }
-components = { path="../components" }
 graphics = { path="../graphics" }

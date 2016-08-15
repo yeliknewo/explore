@@ -21,6 +21,8 @@ pub struct System {
     out_depth: ::gfx::handle::DepthStencilView<::gfx_device_gl::Resources, ::graphics::DepthFormat>,
     color_bundles: ::std::sync::Arc<Vec<::graphics::color::Bundle>>,
     texture_bundles: ::std::sync::Arc<Vec<::graphics::texture::Bundle>>,
+    color_shaders: ::graphics::Shaders,
+    texture_shaders: ::graphics::Shaders,
 }
 
 impl System {
@@ -39,17 +41,32 @@ impl System {
             out_depth: out_depth,
             color_bundles: ::std::sync::Arc::new(Vec::new()),
             texture_bundles: ::std::sync::Arc::new(Vec::new()),
+            color_shaders: ::graphics::color::make_shaders(),
+            texture_shaders: ::graphics::texture::make_shaders(),
         }
     }
 
     pub fn add_render_type_color(&mut self,
+        factory: &mut ::gfx_device_gl::Factory,
+        color_packet: ::graphics::color::Packet
+    ) -> ::comps::RenderType
+    {
+        self.add_render_type_color_raw(
+            factory,
+            color_packet.get_vertices(),
+            color_packet.get_indices(),
+            color_packet.get_rasterizer()
+        )
+    }
+
+    fn add_render_type_color_raw(&mut self,
         factory: &mut ::gfx_device_gl::Factory,
         vertices: &[::graphics::color::Vertex],
         indices: &[::graphics::color::Index],
         rasterizer: ::gfx::state::Rasterizer
     ) -> ::comps::RenderType
     {
-        let shader_set = factory.create_shader_set(::graphics::color::VERTEX_SHADER, ::graphics::color::FRAGMENT_SHADER).unwrap();
+        let shader_set = factory.create_shader_set(self.color_shaders.get_vertex_shader(), self.color_shaders.get_fragment_shader()).unwrap();
 
         let program = factory.create_program(&shader_set).unwrap();
 
@@ -72,13 +89,29 @@ impl System {
 
     pub fn add_render_type_texture(&mut self,
         factory: &mut ::gfx_device_gl::Factory,
-        vertices: &[::graphics::texture::Vertex],
-        indices: &[::graphics::texture::Index],
-        texture_view: ::gfx::handle::ShaderResourceView<::gfx_device_gl::Resources, [f32; 4]>,
-        rasterizer: ::gfx::state::Rasterizer
+        mut texture_packet: ::graphics::texture::Packet
     ) -> ::comps::RenderType
     {
-        let shader_set = factory.create_shader_set(::graphics::texture::VERTEX_SHADER, ::graphics::texture::FRAGMENT_SHADER).unwrap();
+        let texture = texture_packet.get_texture();
+
+        self.add_render_type_texture_raw(
+            factory,
+            texture_packet.get_vertices(),
+            texture_packet.get_indices(),
+            texture_packet.get_rasterizer(),
+            texture
+        )
+    }
+
+    fn add_render_type_texture_raw(&mut self,
+        factory: &mut ::gfx_device_gl::Factory,
+        vertices: &[::graphics::texture::Vertex],
+        indices: &[::graphics::texture::Index],
+        rasterizer: ::gfx::state::Rasterizer,
+        texture_view: ::gfx::handle::ShaderResourceView<::gfx_device_gl::Resources, [f32; 4]>
+    ) -> ::comps::RenderType
+    {
+        let shader_set = factory.create_shader_set(self.texture_shaders.get_vertex_shader(), self.texture_shaders.get_fragment_shader()).unwrap();
 
         let program = factory.create_program(&shader_set).unwrap();
 
