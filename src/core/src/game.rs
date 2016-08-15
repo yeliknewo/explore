@@ -15,10 +15,12 @@ pub struct Game {
 }
 
 impl Game {
-    pub fn new(
+    pub fn new<F>(
         factory: &mut ::gfx_device_gl::Factory,
-        mut game_event_hub: ::event::GameEventHub
+        mut game_event_hub: ::event::GameEventHub,
+        setup: F,
     ) -> Game
+    where F: for<'a> Fn(&'a mut ::specs::Planner<::utils::Delta>, &'a mut ::sys::render::System, &'a mut ::gfx_device_gl::Factory)
     {
         let mut planner = {
             let mut w = ::specs::World::new();
@@ -32,7 +34,6 @@ impl Game {
         };
 
         let mut renderer = ::sys::render::System::new(game_event_hub.render_channel.take().unwrap());
-
 
         planner.mut_world().create_now()
             .with(::comps::Camera::new(
@@ -60,6 +61,8 @@ impl Game {
                     .build();
             }
         }
+
+        setup(&mut planner, &mut renderer, factory);
 
         planner.add_system(renderer, "renderer", 10);
         planner.add_system(::sys::control::System::new(game_event_hub.control_channel.take().unwrap(), (10.0, 10.0)), "control", 30);
