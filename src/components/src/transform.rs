@@ -22,7 +22,7 @@ impl Transform {
     }
 
     pub fn get_model(&self) -> [[::utils::Coord; 4]; 4] {
-        let mut refer = *self.isometry.to_homogeneous().as_ref() as [[f32; 4]; 4];
+        let mut refer = *self.isometry.to_homogeneous().as_ref() as [[::utils::Coord; 4]; 4];
         refer[0][0] *= self.scale.x;
         refer[1][1] *= self.scale.y;
         refer[2][2] *= self.scale.z;
@@ -31,7 +31,7 @@ impl Transform {
 
     pub fn get_gui_offset(&self) -> ::math::Point2 {
         let translation = self.isometry.translation();
-        ::math::Point2::new(-translation.x, translation.y)
+        ::math::Point2::new(translation.x, -translation.y)
     }
 }
 

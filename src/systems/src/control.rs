@@ -69,8 +69,8 @@ impl System {
                 Ok(event) => match event {
                     RecvEvent::MouseMoved(x, y) => {
                         self.mouse_location = ::math::Point2::new(
-                            x as f32 / self.screen_resolution.get_x(),
-                            y as f32 / self.screen_resolution.get_y()
+                            x as ::utils::Coord / self.screen_resolution.get_x(),
+                            y as ::utils::Coord / self.screen_resolution.get_y()
                         );
                     },
                     RecvEvent::MouseInput(pressed, mouse_button) => self.mouse_button.push((pressed, mouse_button)),
@@ -146,8 +146,11 @@ impl<'a> ::specs::System<::utils::Delta> for System {
                             Sign::Zero => 0.0,
                             Sign::Neg => -1.0,
                         };
-                        let (x_off, y_off) = c.get_offset();
-                        c.set_offset((move_h * time * self.move_speed_mult.get_x() + x_off, move_v * time * self.move_speed_mult.get_y() + y_off));
+                        let offset = c.get_offset();
+                        c.set_offset(::math::Point2::new(
+                            move_h * time * self.move_speed_mult.get_x() + offset.get_x(),
+                            move_v * time * self.move_speed_mult.get_y() + offset.get_y()
+                        ));
                     },
                 }
                 for &(width, height) in &self.resize {

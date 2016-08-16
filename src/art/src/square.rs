@@ -9,8 +9,8 @@ pub fn make_square_render(factory: &mut ::gfx_device_gl::Factory) -> Result<::gr
         );
 
     let indices = vec!(
-            0, 3, 2, 2, 1, 0,
-        );
+        0, 3, 2, 2, 1, 0,
+    );
 
     let mut texture_path = match ::find_folder::Search::ParentsThenKids(3, 3).for_folder("assets") {
         Ok(texture_path) => texture_path,
