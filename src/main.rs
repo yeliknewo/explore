@@ -1,12 +1,21 @@
 extern crate nalgebra;
+#[macro_use]
+extern crate log;
+extern crate env_logger;
 
 extern crate core;
 extern crate art;
 extern crate components as comps;
 extern crate math;
+extern crate utils;
 
 fn main() {
-    core::start(|planner, renderer, factory| {
+    env_logger::init().unwrap_or_else(
+        |err|
+            panic!("Unable to initiate env logger: {}", err)
+    );
+
+    core::start(|planner, renderer, factory| -> Result<(), ::utils::Error> {
         planner.mut_world().create_now()
             .with(::comps::Camera::new(
                 ::nalgebra::Point3::new(0.0, 0.0, 2.0),
@@ -18,7 +27,7 @@ fn main() {
 
         let square_packet = ::art::make_square_render(factory);
 
-        let square_render = renderer.add_render_type_texture(factory, square_packet);
+        let square_render = try!(renderer.add_render_type_texture(factory, try!(square_packet)));
 
         for y in -10..10i32 {
             for x in -10..10i32 {
@@ -41,5 +50,7 @@ fn main() {
                     .build();
             }
         }
-    });
+
+        Ok(())
+    }).unwrap();
 }

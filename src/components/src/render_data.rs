@@ -16,11 +16,23 @@ impl RenderData {
     }
 
     pub fn set_tint(&mut self, tint: [f32; 4]) {
-        self.texture_data.as_mut().unwrap().tint = tint;
+        match self.texture_data.as_mut() {
+            Some(texture_data) => texture_data,
+            None => {
+                error!("texture data was none");
+                return;
+            }
+        }.tint = tint;
     }
 
-    pub fn get_tint(&self) -> [f32; 4] {
-        self.texture_data.as_ref().unwrap().tint.clone()
+    pub fn get_tint(&self) -> Result<[f32; 4], ::utils::Error> {
+        Ok(match self.texture_data.as_ref() {
+            Some(texture_data) => texture_data,
+            None => {
+                error!("texture data was none");
+                return Err(::utils::Error::Logged);
+            }
+        }.tint.clone())
     }
 }
 

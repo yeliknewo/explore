@@ -5,6 +5,9 @@ extern crate glutin;
 extern crate gfx_window_glutin;
 extern crate image;
 extern crate find_folder;
+#[macro_use]
+extern crate log;
+extern crate env_logger;
 
 extern crate utils;
 
@@ -22,8 +25,14 @@ pub struct Shaders {
 }
 
 impl Shaders {
-    pub fn new(vertex_name: &'static str, fragment_name: &'static str) -> Shaders {
-        let shaders_path = ::find_folder::Search::ParentsThenKids(3, 3).for_folder("shader").unwrap();
+    pub fn new(vertex_name: &'static str, fragment_name: &'static str) -> Result<Shaders, ::utils::Error> {
+        let shaders_path = match ::find_folder::Search::ParentsThenKids(3, 3).for_folder("shader") {
+            Ok(shaders_path) => shaders_path,
+            Err(err) => {
+                error!("find folder shader error: {}", err);
+                return Err(::utils::Error::Logged);
+            }
+        };
 
         let mut vertex_path = shaders_path.clone();
         let mut fragment_path = shaders_path.clone();
@@ -31,8 +40,20 @@ impl Shaders {
         vertex_path.push(vertex_name);
         fragment_path.push(fragment_name);
 
-        let vertex_file = ::std::fs::File::open(vertex_path).unwrap();
-        let fragment_file = ::std::fs::File::open(fragment_path).unwrap();
+        let vertex_file = match ::std::fs::File::open(vertex_path) {
+            Ok(file) => file,
+            Err(err) => {
+                error!("vertex file open error: {}", err);
+                return Err(::utils::Error::Logged);
+            }
+        };
+        let fragment_file = match ::std::fs::File::open(fragment_path) {
+            Ok(file) => file,
+            Err(err) => {
+                error!("fragment file open error: {}", err);
+                return Err(::utils::Error::Logged);
+            }
+        };
 
         let mut vertex_reader = ::std::io::BufReader::new(vertex_file);
         let mut fragment_reader = ::std::io::BufReader::new(fragment_file);
@@ -40,13 +61,25 @@ impl Shaders {
         let mut vertex_buffer = vec!();
         let mut fragment_buffer = vec!();
 
-        vertex_reader.read_to_end(&mut vertex_buffer).unwrap();
-        fragment_reader.read_to_end(&mut fragment_buffer).unwrap();
+        match vertex_reader.read_to_end(&mut vertex_buffer) {
+            Ok(_) => (),
+            Err(err) => {
+                error!("vertex reader read to end error: {}", err);
+                return Err(::utils::Error::Logged);
+            }
+        };
+        match fragment_reader.read_to_end(&mut fragment_buffer) {
+            Ok(_) => (),
+            Err(err) => {
+                error!("fragment reader read to end error: {}", err);
+                return Err(::utils::Error::Logged);
+            }
+        }
 
-        Shaders {
+        Ok(Shaders {
             vertex: vertex_buffer,
             fragment: fragment_buffer,
-        }
+        })
     }
 
     pub fn get_vertex_shader(&self) -> &[u8] {

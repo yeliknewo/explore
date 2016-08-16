@@ -7,6 +7,7 @@ pub type Channel = (
 
 pub enum SendEvent {
     Encoder(::gfx::Encoder<::gfx_device_gl::Resources, ::gfx_device_gl::CommandBuffer>),
+    Error(::utils::Error),
 }
 
 pub enum RecvEvent {
@@ -28,28 +29,34 @@ pub struct System {
 impl System {
     pub fn new(
         channel: Channel
-    ) -> System
+    ) -> Result<System, ::utils::Error>
     {
-        let (out_color, out_depth) = match channel.1.recv().unwrap() {
-            RecvEvent::GraphicsData(out_color, out_depth) => (out_color, out_depth),
-            _ => panic!("render system received non graphics data first from channel"),
-        };
+        let (out_color, out_depth) = match channel.1.recv() {
+            Ok(event) => match event {
+                RecvEvent::GraphicsData(out_color, out_depth) => (out_color, out_depth),
+                _ => panic!("render system received non graphics data first from channel"),
+            },
+            Err(err) => {
+                error!("new channel 1 rect error: {}", err);
+                return Err(::utils::Error::Logged);
+            }
+        } ;
 
-        System {
+        Ok(System {
             channel: channel,
             out_color: out_color,
             out_depth: out_depth,
             color_bundles: ::std::sync::Arc::new(Vec::new()),
             texture_bundles: ::std::sync::Arc::new(Vec::new()),
-            color_shaders: ::graphics::color::make_shaders(),
-            texture_shaders: ::graphics::texture::make_shaders(),
-        }
+            color_shaders: try!(::graphics::color::make_shaders()),
+            texture_shaders: try!(::graphics::texture::make_shaders()),
+        })
     }
 
     pub fn add_render_type_color(&mut self,
         factory: &mut ::gfx_device_gl::Factory,
         color_packet: ::graphics::color::Packet
-    ) -> ::comps::RenderType
+    ) -> Result<::comps::RenderType, ::utils::Error>
     {
         self.add_render_type_color_raw(
             factory,
@@ -64,13 +71,31 @@ impl System {
         vertices: &[::graphics::color::Vertex],
         indices: &[::graphics::color::Index],
         rasterizer: ::gfx::state::Rasterizer
-    ) -> ::comps::RenderType
+    ) -> Result<::comps::RenderType, ::utils::Error>
     {
-        let shader_set = factory.create_shader_set(self.color_shaders.get_vertex_shader(), self.color_shaders.get_fragment_shader()).unwrap();
+        let shader_set = match factory.create_shader_set(self.color_shaders.get_vertex_shader(), self.color_shaders.get_fragment_shader()) {
+            Ok(shaders) => shaders,
+            Err(err) => {
+                error!("add render type color raw shader set error: {}", err);
+                return Err(::utils::Error::Logged);
+            }
+        };
 
-        let program = factory.create_program(&shader_set).unwrap();
+        let program = match factory.create_program(&shader_set) {
+            Ok(program) => program,
+            Err(err) => {
+                error!("add render type color raw create program error: {}", err);
+                return Err(::utils::Error::Logged);
+            }
+        };
 
-        let pso = factory.create_pipeline_from_program(&program, ::gfx::Primitive::TriangleList, rasterizer, ::graphics::color::pipe::new()).unwrap();
+        let pso = match factory.create_pipeline_from_program(&program, ::gfx::Primitive::TriangleList, rasterizer, ::graphics::color::pipe::new()) {
+            Ok(pipeline) => pipeline,
+            Err(err) => {
+                error!("add render type color raw create pipeline error: {}", err);
+                return Err(::utils::Error::Logged);
+            }
+        };
         let (vbuf, slice) = factory.create_vertex_buffer_with_slice(vertices, indices);
         let data = ::graphics::color::pipe::Data {
             vbuf: vbuf,
@@ -79,18 +104,24 @@ impl System {
             out_depth: self.out_depth.clone(),
         };
         let id = self.color_bundles.len();
-        let mut bundles = ::std::sync::Arc::get_mut(&mut self.color_bundles).unwrap();
+        let mut bundles = match ::std::sync::Arc::get_mut(&mut self.color_bundles) {
+            Some(bundles) => bundles,
+            None => {
+                error!("add render type color raw bundles get mut was none");
+                return Err(::utils::Error::Logged);
+            }
+        };
         bundles.push(::graphics::color::Bundle::new(slice, pso, data));
-        ::comps::RenderType {
+        Ok(::comps::RenderType {
             id: id,
             renderer_type: ::graphics::RendererType::Color,
-        }
+        })
     }
 
     pub fn add_render_type_texture(&mut self,
         factory: &mut ::gfx_device_gl::Factory,
         mut texture_packet: ::graphics::texture::Packet
-    ) -> ::comps::RenderType
+    ) -> Result<::comps::RenderType, ::utils::Error>
     {
         let texture = texture_packet.get_texture();
 
@@ -99,7 +130,7 @@ impl System {
             texture_packet.get_vertices(),
             texture_packet.get_indices(),
             texture_packet.get_rasterizer(),
-            texture
+            try!(texture)
         )
     }
 
@@ -109,13 +140,31 @@ impl System {
         indices: &[::graphics::texture::Index],
         rasterizer: ::gfx::state::Rasterizer,
         texture_view: ::gfx::handle::ShaderResourceView<::gfx_device_gl::Resources, [f32; 4]>
-    ) -> ::comps::RenderType
+    ) -> Result<::comps::RenderType, ::utils::Error>
     {
-        let shader_set = factory.create_shader_set(self.texture_shaders.get_vertex_shader(), self.texture_shaders.get_fragment_shader()).unwrap();
+        let shader_set = match factory.create_shader_set(self.texture_shaders.get_vertex_shader(), self.texture_shaders.get_fragment_shader()) {
+            Ok(shaders) => shaders,
+            Err(err) => {
+                error!("add render type texture raw create shader set error: {}", err);
+                return Err(::utils::Error::Logged);
+            }
+        };
 
-        let program = factory.create_program(&shader_set).unwrap();
+        let program = match factory.create_program(&shader_set) {
+            Ok(program) => program,
+            Err(err) => {
+                error!("add render type texture raw create program error: {}", err);
+                return Err(::utils::Error::Logged);
+            }
+        };
 
-        let pso = factory.create_pipeline_from_program(&program, ::gfx::Primitive::TriangleList, rasterizer, ::graphics::texture::pipe::new()).unwrap();
+        let pso = match factory.create_pipeline_from_program(&program, ::gfx::Primitive::TriangleList, rasterizer, ::graphics::texture::pipe::new()) {
+            Ok(pso) => pso,
+            Err(err) => {
+                error!("add render type texture raw create pipeline error: {}", err);
+                return Err(::utils::Error::Logged);
+            }
+        };
         let (vbuf, slice) = factory.create_vertex_buffer_with_slice(vertices, indices);
         let data = ::graphics::texture::pipe::Data {
             vbuf: vbuf,
@@ -126,15 +175,21 @@ impl System {
             out_depth: self.out_depth.clone(),
         };
         let id = self.texture_bundles.len();
-        let mut bundles = ::std::sync::Arc::get_mut(&mut self.texture_bundles).unwrap();
+        let mut bundles = match ::std::sync::Arc::get_mut(&mut self.texture_bundles) {
+            Some(bundles) => bundles,
+            None => {
+                error!("add render type texture raw get mut bundles was none");
+                return Err(::utils::Error::Logged);
+            }
+        };
         bundles.push(::graphics::texture::Bundle::new(slice, pso, data));
-        ::comps::RenderType {
+        Ok(::comps::RenderType {
             id: id,
             renderer_type: ::graphics::RendererType::Texture,
-        }
+        })
     }
 
-    fn render(&mut self, arg: &::specs::RunArg, mut encoder: ::gfx::Encoder<::gfx_device_gl::Resources, ::gfx_device_gl::CommandBuffer>) {
+    fn render(&mut self, arg: &::specs::RunArg, mut encoder: ::gfx::Encoder<::gfx_device_gl::Resources, ::gfx_device_gl::CommandBuffer>) -> Result<(), ::utils::Error> {
         use specs::Join;
 
         let (draw, transform, camera, render_data) = arg.fetch(|w| {
@@ -152,7 +207,13 @@ impl System {
                     camera_opt = Some(c);
                 }
 
-                camera_opt.unwrap()
+                match camera_opt {
+                    Some(camera) => camera,
+                    None => {
+                        error!("render camera opt was none");
+                        return Err(::utils::Error::Logged);
+                    }
+                }
             };
 
             (camera.get_view(), camera.get_proj())
@@ -174,7 +235,7 @@ impl System {
                     let b = &self.texture_bundles[d.id];
                     encoder.update_constant_buffer(&b.data.projection_cb, &projection_data);
                     let texture_data = ::graphics::texture::TextureData {
-                        tint: render_data.get_tint(),
+                        tint: try!(render_data.get_tint()),
                     };
                     encoder.update_constant_buffer(&b.data.texture_data, &texture_data);
                     b.encode(&mut encoder);
@@ -183,21 +244,43 @@ impl System {
 
         }
 
-        let _ = self.channel.0.send(SendEvent::Encoder(encoder));
+        match self.channel.0.send(SendEvent::Encoder(encoder)) {
+            Ok(()) => (),
+            Err(err) => {
+                error!("render channel 0 send error: {}", err);
+                return Err(::utils::Error::Logged);
+            }
+        }
+
+        Ok(())
     }
 
-    fn set_graphics_data(&mut self, out_color: ::gfx::handle::RenderTargetView<::gfx_device_gl::Resources, ::graphics::ColorFormat>, out_depth: ::gfx::handle::DepthStencilView<::gfx_device_gl::Resources, ::graphics::DepthFormat>) {
+    fn set_graphics_data(&mut self, out_color: ::gfx::handle::RenderTargetView<::gfx_device_gl::Resources, ::graphics::ColorFormat>, out_depth: ::gfx::handle::DepthStencilView<::gfx_device_gl::Resources, ::graphics::DepthFormat>) -> Result<(), ::utils::Error> {
         self.out_color = out_color;
         self.out_depth = out_depth;
 
-        for bundle in ::std::sync::Arc::get_mut(&mut self.color_bundles).unwrap() {
+        for bundle in match ::std::sync::Arc::get_mut(&mut self.color_bundles) {
+            Some(bundle) => bundle,
+            None => {
+                error!("set graphics data get mut color bundles was none");
+                return Err(::utils::Error::Logged);
+            }
+        } {
             bundle.data.out_color = self.out_color.clone();
             bundle.data.out_depth = self.out_depth.clone();
         }
-        for bundle in ::std::sync::Arc::get_mut(&mut self.texture_bundles).unwrap() {
+        for bundle in match ::std::sync::Arc::get_mut(&mut self.texture_bundles) {
+            Some(bundle) => bundle,
+            None => {
+                error!("set graphics data get mut texture bundles was none");
+                return Err(::utils::Error::Logged);
+            }
+        }  {
             bundle.data.out_color = self.out_color.clone();
             bundle.data.out_depth = self.out_depth.clone();
         }
+
+        Ok(())
     }
 
     fn exit(&mut self, arg: &::specs::RunArg) {
@@ -206,19 +289,19 @@ impl System {
         arg.fetch(|_| ());
     }
 
-    fn process_event(&mut self, arg: &::specs::RunArg, event: RecvEvent) -> bool {
+    fn process_event(&mut self, arg: &::specs::RunArg, event: RecvEvent) -> Result<bool, ::utils::Error> {
         match event {
             RecvEvent::Encoder(encoder) => {
-                self.render(arg, encoder);
-                false
+                try!(self.render(arg, encoder));
+                Ok(false)
             },
             RecvEvent::GraphicsData(out_color, out_depth) => {
-                self.set_graphics_data(out_color, out_depth);
-                true
+                try!(self.set_graphics_data(out_color, out_depth));
+                Ok(true)
             },
             RecvEvent::Exit => {
                 self.exit(arg);
-                false
+                Ok(false)
             },
         }
     }
@@ -226,9 +309,29 @@ impl System {
 
 impl ::specs::System<::utils::Delta> for System {
     fn run(&mut self, arg: ::specs::RunArg, _: ::utils::Delta) {
-        let mut event = self.channel.1.recv().unwrap();
-        while self.process_event(&arg, event) {
-            event = self.channel.1.recv().unwrap();
+        let mut event = match self.channel.1.recv() {
+            Ok(event) => event,
+            Err(err) => {
+                error!("run channel 1 recv error: {}", err);
+                self.channel.0.send(SendEvent::Error(::utils::Error::Logged)).unwrap(); //no solution
+                return;
+            },
+        };
+        while match self.process_event(&arg, event) {
+            Ok(b) => b,
+            Err(err) => {
+                self.channel.0.send(SendEvent::Error(err)).unwrap(); //no solution
+                return;
+            },
+        } {
+            event = match self.channel.1.recv() {
+                Ok(event) => event,
+                Err(err) => {
+                    error!("run channel 1 recv error: {}", err);
+                    self.channel.0.send(SendEvent::Error(::utils::Error::Logged)).unwrap(); //no solution
+                    return;
+                },
+            };
         }
     }
 }

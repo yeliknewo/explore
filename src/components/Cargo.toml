@@ -6,6 +6,8 @@ authors = ["Kiley Owen <yelikdev@gmail.com>"]
 [dependencies]
 specs = "*"
 nalgebra = "*"
+log = "*"
+env_logger = "*"
 
 graphics = { path="../graphics" }
 utils = { path="../utils" }

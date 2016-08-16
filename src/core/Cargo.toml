@@ -11,6 +11,8 @@ gfx_window_glutin = "*"
 specs = "*"
 nalgebra = "*"
 time = "*"
+log = "*"
+env_logger = "*"
 
 art = { path="../art" }
 systems = { path="../systems" }

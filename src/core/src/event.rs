@@ -63,61 +63,88 @@ impl DevEventHub{
     }
 
     pub fn send_to_control(&mut self, event: ::sys::control::RecvEvent) {
-        self.send_to_control.send(event).unwrap();
+        match self.send_to_control.send(event) {
+            Ok(()) => (),
+            Err(err) => error!("send to control error: {}", err),
+        }
     }
 
-    pub fn recv_from_control(&mut self) -> ::sys::control::SendEvent {
-        self.recv_from_control.recv().unwrap()
+    pub fn recv_from_control(&mut self) -> Result<::sys::control::SendEvent, ::utils::Error> {
+        match self.recv_from_control.recv() {
+            Ok(event) => Ok(event),
+            Err(err) => {
+                error!("recv from control error: {}", err);
+                Err(::utils::Error::Logged)
+            },
+        }
     }
 
-    pub fn try_recv_from_control(&mut self) -> Result<::sys::control::SendEvent, ::std::sync::mpsc::TryRecvError> {
-        self.recv_from_control.try_recv()
+    pub fn try_recv_from_control(&mut self) -> Result<::sys::control::SendEvent, ::utils::Error> {
+        match self.recv_from_control.try_recv() {
+            Ok(event) => Ok(event),
+            Err(err) => match err {
+                ::std::sync::mpsc::TryRecvError::Empty => Err(::utils::Error::Empty),
+                ::std::sync::mpsc::TryRecvError::Disconnected => {
+                    error!("try recv from control was disconnected");
+                    Err(::utils::Error::Logged)
+                },
+            }
+        }
     }
 
     pub fn send_to_render(&mut self, event: ::sys::render::RecvEvent) {
-        self.send_to_render.send(event).unwrap();
+        match self.send_to_render.send(event) {
+            Ok(()) => (),
+            Err(err) => error!("send to render error: {}", err),
+        }
     }
 
-    pub fn recv_from_render(&mut self) -> ::sys::render::SendEvent {
-        self.recv_from_render.recv().unwrap()
+    pub fn recv_from_render(&mut self) -> Result<::sys::render::SendEvent, ::utils::Error> {
+        match self.recv_from_render.recv() {
+            Ok(event) => Ok(event),
+            Err(err) => {
+                error!("recv from render err: {}", err);
+                Err(::utils::Error::Logged)
+            },
+        }
     }
 
     pub fn send_to_game(&mut self, event: ::game::RecvEvent) {
-        self.send_to_game.send(event).unwrap();
+        match self.send_to_game.send(event) {
+            Ok(()) => (),
+            Err(err) => error!("send to game error: {}", err),
+        }
     }
 
     pub fn process_glutin(&mut self, event: ::glutin::Event) {
-        // use glutin::Event::{Resized, KeyboardInput, MouseMoved, MouseInput};
-        // use glutin::{ElementState, VirtualKeyCode};
-
         match event {
-            ::glutin::Event::MouseMoved(x, y) => self.send_to_control.send(::sys::control::RecvEvent::MouseMoved(x as u32, y as u32)).unwrap(),
-            ::glutin::Event::MouseInput(state, button) => self.send_to_control.send(::sys::control::RecvEvent::MouseInput(match state {
+            ::glutin::Event::MouseMoved(x, y) => self.send_to_control(::sys::control::RecvEvent::MouseMoved(x as u32, y as u32)),
+            ::glutin::Event::MouseInput(state, button) => self.send_to_control(::sys::control::RecvEvent::MouseInput(match state {
                 ::glutin::ElementState::Pressed => true,
                 ::glutin::ElementState::Released => false,
             },
-            button)).unwrap(),
+            button)),
             ::glutin::Event::KeyboardInput(state, _, Some(::glutin::VirtualKeyCode::D)) |
             ::glutin::Event::KeyboardInput(state, _, Some(::glutin::VirtualKeyCode::Right)) => match state {
-                ::glutin::ElementState::Pressed => self.send_to_control.send(::sys::control::RecvEvent::Right(true)).unwrap(),
-                ::glutin::ElementState::Released => self.send_to_control.send(::sys::control::RecvEvent::Right(false)).unwrap(),
+                ::glutin::ElementState::Pressed => self.send_to_control(::sys::control::RecvEvent::Right(true)),
+                ::glutin::ElementState::Released => self.send_to_control(::sys::control::RecvEvent::Right(false)),
             },
             ::glutin::Event::KeyboardInput(state, _, Some(::glutin::VirtualKeyCode::A)) |
             ::glutin::Event::KeyboardInput(state, _, Some(::glutin::VirtualKeyCode::Left)) => match state {
-                ::glutin::ElementState::Pressed => self.send_to_control.send(::sys::control::RecvEvent::Left(true)).unwrap(),
-                ::glutin::ElementState::Released => self.send_to_control.send(::sys::control::RecvEvent::Left(false)).unwrap(),
+                ::glutin::ElementState::Pressed => self.send_to_control(::sys::control::RecvEvent::Left(true)),
+                ::glutin::ElementState::Released => self.send_to_control(::sys::control::RecvEvent::Left(false)),
             },
             ::glutin::Event::KeyboardInput(state, _, Some(::glutin::VirtualKeyCode::W)) |
             ::glutin::Event::KeyboardInput(state, _, Some(::glutin::VirtualKeyCode::Up)) => match state {
-                ::glutin::ElementState::Pressed => self.send_to_control.send(::sys::control::RecvEvent::Up(true)).unwrap(),
-                ::glutin::ElementState::Released => self.send_to_control.send(::sys::control::RecvEvent::Up(false)).unwrap(),
+                ::glutin::ElementState::Pressed => self.send_to_control(::sys::control::RecvEvent::Up(true)),
+                ::glutin::ElementState::Released => self.send_to_control(::sys::control::RecvEvent::Up(false)),
             },
             ::glutin::Event::KeyboardInput(state, _, Some(::glutin::VirtualKeyCode::S)) |
             ::glutin::Event::KeyboardInput(state, _, Some(::glutin::VirtualKeyCode::Down)) => match state {
-                ::glutin::ElementState::Pressed => self.send_to_control.send(::sys::control::RecvEvent::Down(true)).unwrap(),
-                ::glutin::ElementState::Released => self.send_to_control.send(::sys::control::RecvEvent::Down(false)).unwrap(),
+                ::glutin::ElementState::Pressed => self.send_to_control(::sys::control::RecvEvent::Down(true)),
+                ::glutin::ElementState::Released => self.send_to_control(::sys::control::RecvEvent::Down(false)),
             },
-            ::glutin::Event::Resized(width, height) => self.send_to_control.send(::sys::control::RecvEvent::Resize(width, height)).unwrap(),
+            ::glutin::Event::Resized(width, height) => self.send_to_control(::sys::control::RecvEvent::Resize(width, height)),
             _ => (),
         }
     }

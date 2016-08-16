@@ -1,6 +1,6 @@
 pub type Index = u32;
 
-pub fn make_shaders() -> ::Shaders {
+pub fn make_shaders() -> Result<::Shaders, ::utils::Error> {
     ::Shaders::new("texture_150_v.glsl", "texture_150_f.glsl")
 }
 
@@ -38,14 +38,26 @@ impl Vertex {
 }
 
 pub fn load_texture<R, F>(factory: &mut F, data: &[u8])
-                -> Result<::gfx::handle::ShaderResourceView<R, [f32; 4]>, String> where
+                -> Result<::gfx::handle::ShaderResourceView<R, [f32; 4]>, ::utils::Error> where
                 R: ::gfx::Resources, F: ::gfx::Factory<R> {
     use std::io::Cursor;
     use gfx::tex as t;
-    let img = ::image::load(Cursor::new(data), ::image::JPEG).unwrap().to_rgba();
+    let img = match ::image::load(Cursor::new(data), ::image::JPEG) {
+        Ok(image) => image,
+        Err(err) => {
+            error!("image load error: {}", err);
+            return Err(::utils::Error::Logged);
+        }
+    }.to_rgba();
     let (width, height) = img.dimensions();
     let kind = t::Kind::D2(width as t::Size, height as t::Size, t::AaMode::Single);
-    let (_, view) = factory.create_texture_const_u8::<::ColorFormat>(kind, &[&img]).unwrap();
+    let (_, view) = match factory.create_texture_const_u8::<::ColorFormat>(kind, &[&img]) {
+        Ok(data) => data,
+        Err(err) => {
+            error!("factroy create texture const error: {}", err);
+            return Err(::utils::Error::Logged);
+        }
+    };
     Ok(view)
 }
 
@@ -108,8 +120,14 @@ impl Packet {
         self.rasterizer
     }
 
-    pub fn get_texture(&mut self) -> ::gfx::handle::ShaderResourceView<::gfx_device_gl::Resources, [f32; 4]> {
-        self.texture.take().unwrap()
+    pub fn get_texture(&mut self) -> Result<::gfx::handle::ShaderResourceView<::gfx_device_gl::Resources, [f32; 4]>, ::utils::Error> {
+        match self.texture.take() {
+            Some(texture) => Ok(texture),
+            None => {
+                error!("get texture was none");
+                return Err(::utils::Error::Logged);
+            }
+        }
     }
 
 

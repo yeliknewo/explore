@@ -9,6 +9,8 @@ gfx_device_gl = "*"
 glutin = "*"
 specs = "*"
 nalgebra = "*"
+log = "*"
+env_logger = "*"
 
 graphics = { path="../graphics" }
 utils = { path="../utils" }

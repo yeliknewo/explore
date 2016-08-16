@@ -1,5 +1,8 @@
 extern crate specs;
 extern crate nalgebra;
+#[macro_use]
+extern crate log;
+extern crate env_logger;
 
 extern crate graphics;
 extern crate utils;

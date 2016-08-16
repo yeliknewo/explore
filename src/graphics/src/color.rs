@@ -1,6 +1,6 @@
 pub type Index = u32;
 
-pub fn make_shaders() -> ::Shaders {
+pub fn make_shaders() -> Result<::Shaders, ::utils::Error> {
     ::Shaders::new("color_150_v.glsl", "color_150_f.glsl")
 }
 

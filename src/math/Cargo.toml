@@ -4,3 +4,5 @@ version = "0.1.0"
 authors = ["Kiley Owen <yelikdev@gmail.com>"]
 
 [dependencies]
+log = "*"
+env_logger = "*"

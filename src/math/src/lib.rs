@@ -1,3 +1,7 @@
+#[macro_use]
+extern crate log;
+extern crate env_logger;
+
 pub type Float = f32;
 
 #[derive(Copy, Clone)]

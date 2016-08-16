@@ -10,5 +10,7 @@ glutin = "*"
 gfx_window_glutin = "*"
 image = "*"
 find_folder = "*"
+log = "*"
+env_logger = "*"
 
 utils = { path="../utils" }

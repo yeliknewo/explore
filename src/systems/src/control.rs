@@ -97,7 +97,10 @@ impl System {
                         }
                     },
                     RecvEvent::Resize(width, height) => {
-                        self.channel.0.send(SendEvent::Resize).unwrap();
+                        match self.channel.0.send(SendEvent::Resize) {
+                            Ok(()) => (),
+                            Err(err) => error!("resize channel 0 send error: {}", err),
+                        };
                         self.resize = Some((width, height));
                     },
                     RecvEvent::Exit => {

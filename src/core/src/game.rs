@@ -20,8 +20,8 @@ impl Game {
         mut game_event_hub: ::event::GameEventHub,
         screen_size: ::math::Point2,
         setup: F,
-    ) -> Game
-    where F: for<'a> Fn(&'a mut ::specs::Planner<::utils::Delta>, &'a mut ::sys::render::System, &'a mut ::gfx_device_gl::Factory)
+    ) -> Result<Game, ::utils::Error>
+    where F: for<'a> Fn(&'a mut ::specs::Planner<::utils::Delta>, &'a mut ::sys::render::System, &'a mut ::gfx_device_gl::Factory) -> Result<(), ::utils::Error>
     {
         let mut planner = {
             let mut w = ::specs::World::new();
@@ -35,20 +35,38 @@ impl Game {
             ::specs::Planner::<::utils::Delta>::new(w, 4)
         };
 
-        let mut renderer = ::sys::render::System::new(game_event_hub.render_channel.take().unwrap());
+        let mut renderer = try!(::sys::render::System::new(match game_event_hub.render_channel.take() {
+            Some(channel) => channel,
+            None => {
+                error!("game event hub render channel was none");
+                return Err(::utils::Error::Logged)
+            },
+        }));
 
-        setup(&mut planner, &mut renderer, factory);
+        try!(setup(&mut planner, &mut renderer, factory));
 
         planner.add_system(renderer, "renderer", 10);
-        planner.add_system(::sys::control::System::new(game_event_hub.control_channel.take().unwrap(), (10.0, 10.0), screen_size), "control", 30);
+        planner.add_system(::sys::control::System::new(match game_event_hub.control_channel.take() {
+            Some(channel) => channel,
+            None => {
+                error!("game event hub control channel was none");
+                return Err(::utils::Error::Logged);
+            }
+        }, (10.0, 10.0), screen_size), "control", 30);
 
-        Game {
+        Ok(Game {
             planner: planner,
             last_time: ::time::precise_time_ns(),
             target_fps_delta: 1.0 / 60.0,
             current_fps_delta: 0.0,
-            channel: game_event_hub.game_channel.take().unwrap(),
-        }
+            channel: match game_event_hub.game_channel.take() {
+                Some(channel) => channel,
+                None => {
+                    error!("game event hub game channel was none");
+                    return Err(::utils::Error::Logged);
+                }
+            },
+        })
     }
 
     pub fn frame(&mut self) -> bool {
