@@ -17,11 +17,15 @@ fn main() {
 
     core::start(|planner, renderer, factory| -> Result<(), ::utils::Error> {
         planner.mut_world().create_now()
-            .with(::comps::Camera::new(
+            .with(::comps::Camera::new_from_proj_args(
                 ::nalgebra::Point3::new(0.0, 0.0, 2.0),
                 ::nalgebra::Point3::new(0.0, 0.0, 0.0),
                 ::nalgebra::Vector3::new(0.0, 1.0, 0.0),
-                ::nalgebra::OrthographicMatrix3::new_with_fov(4.0 / 3.0, 90.0, 0.01, 10.0)
+                4.0 / 3.0,
+                90.0,
+                0.0,
+                10.0,
+                true
             ))
             .build();
 

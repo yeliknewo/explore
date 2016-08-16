@@ -71,6 +71,13 @@ where F: for<'a> Fn(&'a mut specs::Planner<::utils::Delta>, &'a mut sys::render:
                     gfx_window_glutin::update_views(&window, &mut out_color, &mut out_depth);
                     event_dev.send_to_render(sys::render::RecvEvent::GraphicsData(out_color.clone(), out_depth.clone()));
                 },
+                sys::control::SendEvent::Error(err) => match err {
+                    utils::Error::Empty => {
+                        error!("control send event error was empty");
+                        return Err(utils::Error::Empty);
+                    },
+                    utils::Error::Logged => return Err(utils::Error::Logged),
+                },
             },
             Err(::utils::Error::Empty) => (),
             Err(::utils::Error::Logged) => return Err(::utils::Error::Logged),

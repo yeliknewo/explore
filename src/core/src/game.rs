@@ -52,7 +52,7 @@ impl Game {
                 error!("game event hub control channel was none");
                 return Err(::utils::Error::Logged);
             }
-        }, (10.0, 10.0), screen_size), "control", 30);
+        }, ::math::Point2::new(10.0, 10.0), screen_size), "control", 30);
 
         Ok(Game {
             planner: planner,
@@ -79,7 +79,7 @@ impl Game {
             Err(::std::sync::mpsc::TryRecvError::Empty) => {
                 if self.current_fps_delta > self.target_fps_delta {
                     self.planner.dispatch(self.current_fps_delta);
-                    info!("Estimated FPS: {}", self.current_fps_delta * 60.0 * 60.0);
+                    // info!("Estimated FPS: {}", self.current_fps_delta * 60.0 * 60.0);
                     self.current_fps_delta = 0.0;
                 } else {
                     ::std::thread::sleep(::std::time::Duration::new(0, ((self.target_fps_delta - self.current_fps_delta* 0.99) * 1e9) as u32));

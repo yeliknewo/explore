@@ -16,6 +16,7 @@ pub enum RecvEvent {
 
 pub enum SendEvent {
     Resize,
+    Error(::utils::Error),
 }
 
 #[derive(Copy, Clone)]
@@ -29,19 +30,18 @@ pub struct System {
     channel: Channel,
     move_h: Sign,
     move_v: Sign,
-    move_speed_mult: (::utils::Coord, ::utils::Coord),
+    move_speed_mult: ::math::Point2,
     resize: Option<(u32, u32)>,
-    screen_size: ::math::Point2,
     mouse_location: ::math::Point2,
     mouse_button: Vec<(bool, ::glutin::MouseButton)>,
-    view_size: f32,
+    screen_resolution: ::math::Point2,
 }
 
 impl System {
     pub fn new(
         channel: Channel,
-        move_speed_mult: (::utils::Coord, ::utils::Coord),
-        screen_size: ::math::Point2
+        move_speed_mult: ::math::Point2,
+        screen_resolution: ::math::Point2
     ) -> System
     {
         System {
@@ -50,10 +50,9 @@ impl System {
             move_v: Sign::Zero,
             move_speed_mult: move_speed_mult,
             resize: None,
-            screen_size: screen_size,
             mouse_location: ::math::Point2::new(0.0, 0.0),
             mouse_button: vec!(),
-            view_size: 10.0,
+            screen_resolution: screen_resolution,
         }
     }
 
@@ -63,8 +62,8 @@ impl System {
                 Ok(event) => match event {
                     RecvEvent::MouseMoved(x, y) => {
                         self.mouse_location = ::math::Point2::new(
-                            x as f32 / self.screen_size.get_x() * self.view_size,
-                            y as f32 / self.screen_size.get_y() * self.view_size
+                            x as f32 / self.screen_resolution.get_x(),
+                            y as f32 / self.screen_resolution.get_y()
                         );
                     },
                     RecvEvent::MouseInput(pressed, mouse_button) => self.mouse_button.push((pressed, mouse_button)),
@@ -123,6 +122,46 @@ impl<'a> ::specs::System<::utils::Delta> for System {
             (w.write::<::comps::Camera>(), w.write::<::comps::Clickable>(), w.write::<::comps::RenderData>(), w.read::<::comps::Transform>())
         });
 
+        let mut camera_opt = None;
+
+        for mut c in (&mut camera).iter() {
+            if c.is_main() {
+
+                match (self.move_h, self.move_v) {
+                    (Sign::Zero, Sign::Zero) => (),
+                    (h, v) => {
+                        let move_h = match h {
+                            Sign::Pos => 1.0,
+                            Sign::Zero => 0.0,
+                            Sign::Neg => -1.0,
+                        };
+                        let move_v = match v {
+                            Sign::Pos => 1.0,
+                            Sign::Zero => 0.0,
+                            Sign::Neg => -1.0,
+                        };
+                        let (x_off, y_off) = c.get_offset();
+                        c.set_offset((move_h * time * self.move_speed_mult.get_x() + x_off, move_v * time * self.move_speed_mult.get_y() + y_off));
+                    },
+                }
+                if let Some((width, height)) = self.resize.take() {
+                    let aspect_ratio = width as ::utils::Coord / height as ::utils::Coord;
+                    c.set_proj(::nalgebra::OrthographicMatrix3::new_with_fov(aspect_ratio, 90.0, 0.0, 10.0), aspect_ratio);
+                }
+                camera_opt = Some(c);
+                break;
+            }
+        }
+
+        let camera = match camera_opt {
+            Some(c) => c,
+            None => {
+                error!("run camera opt was none");
+                self.channel.0.send(SendEvent::Error(::utils::Error::Logged)).unwrap();
+                return;
+            }
+        };
+
         if let Some(input) = self.mouse_button.pop() {
             trace!("Mouse Button Received");
             match input {
@@ -130,7 +169,9 @@ impl<'a> ::specs::System<::utils::Delta> for System {
                     trace!("Left Mouse Button Pressed");
                     for (t, mut c, mut td) in (&transform, &mut clickable, &mut texture_data).iter() {
                         trace!("Found Entity with Clickable and Texture Data");
-                        if  c.hitbox.check_collide_point_with_offset(self.mouse_location, t.get_gui_offset()) {
+                        let world_point = camera.screen_to_world_point(self.mouse_location).add(t.get_gui_offset());
+                        debug!("world x,y: ({},{})", world_point.get_x(), world_point.get_y());
+                        if  c.hitbox.check_collide_point_with_offset(camera.screen_to_world_point(self.mouse_location), t.get_gui_offset()) {
                             trace!("Hitbox Collided with Mouse Location");
                             c.clicked = true;
                             td.set_tint([1.0, 1.0, 1.0, 1.0]);
@@ -140,29 +181,6 @@ impl<'a> ::specs::System<::utils::Delta> for System {
                     }
                 },
                 _ => (),
-            }
-        }
-
-        for mut c in (&mut camera).iter() {
-            match (self.move_h, self.move_v) {
-                (Sign::Zero, Sign::Zero) => (),
-                (h, v) => {
-                    let move_h = match h {
-                        Sign::Pos => 1.0,
-                        Sign::Zero => 0.0,
-                        Sign::Neg => -1.0,
-                    };
-                    let move_v = match v {
-                        Sign::Pos => 1.0,
-                        Sign::Zero => 0.0,
-                        Sign::Neg => -1.0,
-                    };
-                    let (x_off, y_off) = c.get_offset();
-                    c.set_offset((move_h * time * self.move_speed_mult.0 + x_off, move_v * time * self.move_speed_mult.1 + y_off));
-                },
-            }
-            if let Some((width, height)) = self.resize.take() {
-                c.set_proj(::nalgebra::OrthographicMatrix3::new_with_fov(width as ::utils::Coord / height as ::utils::Coord, 90.0, 0.0, 10.0));
             }
         }
     }

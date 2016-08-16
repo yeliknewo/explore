@@ -30,7 +30,7 @@ impl Transform {
 
     pub fn get_gui_offset(&self) -> ::math::Point2 {
         let translation = self.isometry.translation();
-        ::math::Point2::new(translation.x, translation.y)
+        ::math::Point2::new(-translation.x, translation.y)
     }
 }
 
