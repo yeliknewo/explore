@@ -1,4 +1,4 @@
-#[derive(Copy, Clone, PartialEq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Hash)]
 pub struct RenderType {
     pub id: usize,
     pub renderer_type: ::graphics::RendererType,

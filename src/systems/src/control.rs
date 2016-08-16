@@ -3,6 +3,7 @@ pub type Channel = (
     ::std::sync::mpsc::Receiver<RecvEvent>
 );
 
+#[derive(Debug)]
 pub enum RecvEvent {
     Right(bool),
     Left(bool),
@@ -14,34 +15,39 @@ pub enum RecvEvent {
     Exit,
 }
 
+#[derive(Debug)]
 pub enum SendEvent {
     Resize,
     Error(::utils::Error),
 }
 
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 enum Sign {
     Pos,
     Zero,
     Neg,
 }
 
+#[derive(Debug)]
 pub struct System {
     channel: Channel,
     move_h: Sign,
     move_v: Sign,
     move_speed_mult: ::math::Point2,
-    resize: Option<(u32, u32)>,
+    resize: Vec<(u32, u32)>,
     mouse_location: ::math::Point2,
     mouse_button: Vec<(bool, ::glutin::MouseButton)>,
     screen_resolution: ::math::Point2,
+    ortho_helper: ::math::OrthographicHelper,
 }
 
 impl System {
     pub fn new(
         channel: Channel,
         move_speed_mult: ::math::Point2,
-        screen_resolution: ::math::Point2
+        mouse_location: ::math::Point2,
+        screen_resolution: ::math::Point2,
+        ortho_helper: ::math::OrthographicHelper
     ) -> System
     {
         System {
@@ -49,10 +55,11 @@ impl System {
             move_h: Sign::Zero,
             move_v: Sign::Zero,
             move_speed_mult: move_speed_mult,
-            resize: None,
-            mouse_location: ::math::Point2::new(0.0, 0.0),
+            resize: vec!(),
+            mouse_location: mouse_location,
             mouse_button: vec!(),
             screen_resolution: screen_resolution,
+            ortho_helper: ortho_helper,
         }
     }
 
@@ -100,11 +107,11 @@ impl System {
                             Ok(()) => (),
                             Err(err) => error!("resize channel 0 send error: {}", err),
                         };
-                        self.resize = Some((width, height));
+                        self.resize.push((width, height));
                     },
                     RecvEvent::Exit => {
                         //use to save
-                    }
+                    },
                 },
                 Err(_) => return,
             }
@@ -126,7 +133,6 @@ impl<'a> ::specs::System<::utils::Delta> for System {
 
         for mut c in (&mut camera).iter() {
             if c.is_main() {
-
                 match (self.move_h, self.move_v) {
                     (Sign::Zero, Sign::Zero) => (),
                     (h, v) => {
@@ -144,9 +150,9 @@ impl<'a> ::specs::System<::utils::Delta> for System {
                         c.set_offset((move_h * time * self.move_speed_mult.get_x() + x_off, move_v * time * self.move_speed_mult.get_y() + y_off));
                     },
                 }
-                if let Some((width, height)) = self.resize.take() {
-                    let aspect_ratio = width as ::utils::Coord / height as ::utils::Coord;
-                    c.set_proj(::nalgebra::OrthographicMatrix3::new_with_fov(aspect_ratio, 90.0, 0.0, 10.0), aspect_ratio);
+                for &(width, height) in &self.resize {
+                    self.ortho_helper.set_aspect_ratio(width as ::utils::Coord / height as ::utils::Coord);
+                    c.set_proj(&self.ortho_helper);
                 }
                 camera_opt = Some(c);
                 break;
@@ -163,16 +169,10 @@ impl<'a> ::specs::System<::utils::Delta> for System {
         };
 
         if let Some(input) = self.mouse_button.pop() {
-            trace!("Mouse Button Received");
             match input {
                 (true, ::glutin::MouseButton::Left) => {
-                    trace!("Left Mouse Button Pressed");
                     for (t, mut c, mut td) in (&transform, &mut clickable, &mut texture_data).iter() {
-                        trace!("Found Entity with Clickable and Texture Data");
-                        let world_point = camera.screen_to_world_point(self.mouse_location).add(t.get_gui_offset());
-                        debug!("world x,y: ({},{})", world_point.get_x(), world_point.get_y());
                         if  c.hitbox.check_collide_point_with_offset(camera.screen_to_world_point(self.mouse_location), t.get_gui_offset()) {
-                            trace!("Hitbox Collided with Mouse Location");
                             c.clicked = true;
                             td.set_tint([1.0, 1.0, 1.0, 1.0]);
                         } else {

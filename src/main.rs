@@ -15,46 +15,8 @@ fn main() {
             panic!("Unable to initiate env logger: {}", err)
     );
 
-    core::start(|planner, renderer, factory| -> Result<(), ::utils::Error> {
-        planner.mut_world().create_now()
-            .with(::comps::Camera::new_from_proj_args(
-                ::nalgebra::Point3::new(0.0, 0.0, 2.0),
-                ::nalgebra::Point3::new(0.0, 0.0, 0.0),
-                ::nalgebra::Vector3::new(0.0, 1.0, 0.0),
-                4.0 / 3.0,
-                90.0,
-                0.0,
-                10.0,
-                true
-            ))
-            .build();
-
-        let square_packet = ::art::make_square_render(factory);
-
-        let square_render = try!(renderer.add_render_type_texture(factory, try!(square_packet)));
-
-        for y in -10..10i32 {
-            for x in -10..10i32 {
-                planner.mut_world().create_now()
-                    .with(square_render)
-                    .with(comps::Transform::new(
-                        nalgebra::Isometry3::new(
-                            nalgebra::Vector3::new(x as f32, y as f32, 0.0),
-                            nalgebra::Vector3::new(0.0, 0.0, 0.0),
-                        ),
-                        nalgebra::Vector3::new(1.0, 1.0, 1.0)
-                    ))
-                    .with(comps::RenderData::new_texture([
-                        (x + 10) as f32 / 20.0,
-                        (y + 10) as f32 / 20.0,
-                        ((x + 10) as f32 / 20.0 + (y + 10) as f32 / 20.0) / 2.0,
-                        1.0
-                    ]))
-                    .with(comps::Clickable::new(::math::Rect::new_from_coords(0.0, 0.0, 1.0, 1.0)))
-                    .build();
-            }
-        }
-
-        Ok(())
-    }).unwrap();
+    match core::start() {
+        Ok(()) => info!("Game exiting"),
+        Err(err) => error!("core start error: {}", err),
+    }
 }

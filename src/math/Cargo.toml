@@ -4,5 +4,8 @@ version = "0.1.0"
 authors = ["Kiley Owen <yelikdev@gmail.com>"]
 
 [dependencies]
+nalgebra = "*"
 log = "*"
 env_logger = "*"
+
+utils = { path="../utils" }

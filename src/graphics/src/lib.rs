@@ -19,6 +19,7 @@ pub mod texture;
 pub type ColorFormat = gfx::format::Rgba8;
 pub type DepthFormat = gfx::format::DepthStencil;
 
+#[derive(Debug)]
 pub struct Shaders {
     vertex: Vec<u8>,
     fragment: Vec<u8>,
@@ -91,7 +92,7 @@ impl Shaders {
     }
 }
 
-#[derive(Copy, Clone, Hash, PartialEq)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq)]
 pub enum RendererType {
     Color,
     Texture,

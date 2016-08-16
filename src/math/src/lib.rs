@@ -1,10 +1,17 @@
+extern crate nalgebra;
 #[macro_use]
 extern crate log;
 extern crate env_logger;
 
+extern crate utils;
+
+pub mod ortho_helper;
+
+pub use self::ortho_helper::OrthographicHelper;
+
 pub type Float = f32;
 
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct Rect {
     corners: LineSeg,
 }
@@ -51,7 +58,7 @@ impl Rect {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct LineSeg {
     a: Point2,
     b: Point2,
@@ -78,7 +85,7 @@ impl LineSeg {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct Point2 {
     x: Float,
     y: Float,

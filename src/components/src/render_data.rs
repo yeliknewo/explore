@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub struct RenderData {
     texture_data: Option<TextureData>,
 }
@@ -36,6 +37,7 @@ impl RenderData {
     }
 }
 
+#[derive(Debug)]
 pub struct TextureData {
     pub tint: [f32; 4],
 }

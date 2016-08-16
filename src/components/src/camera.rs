@@ -1,5 +1,6 @@
 use nalgebra::ToHomogeneous;
 
+#[derive(Debug)]
 pub struct Camera {
     eye: ::nalgebra::Point3<::utils::Coord>,
     target: ::nalgebra::Point3<::utils::Coord>,
@@ -42,6 +43,16 @@ impl Camera {
         Camera::new(eye, target, up, ::nalgebra::OrthographicMatrix3::new_with_fov(aspect_ratio, fov, near, far), aspect_ratio, is_main)
     }
 
+    pub fn new_from_ortho_helper(
+        eye: ::nalgebra::Point3<f32>,
+        target: ::nalgebra::Point3<f32>,
+        up: ::nalgebra::Vector3<f32>,
+        ortho_helper: &::math::OrthographicHelper,
+        is_main: bool
+    ) -> Camera {
+        Camera::new(eye, target, up, ortho_helper.build_matrix(), ortho_helper.get_aspect_ratio(), is_main)
+    }
+
     pub fn set_offset(&mut self, (x, y): (f32, f32)) {
         self.set_eye(::nalgebra::Point3::new(x, y, 2.0));
         self.set_target(::nalgebra::Point3::new(x, y, 0.0));
@@ -55,9 +66,9 @@ impl Camera {
         self.target = target;
     }
 
-    pub fn set_proj(&mut self, proj: ::nalgebra::OrthographicMatrix3<f32>, aspect_ratio: ::utils::Coord) {
-        self.proj = proj;
-        self.aspect_ratio = aspect_ratio;
+    pub fn set_proj(&mut self, ortho_helper: & ::math::OrthographicHelper) {
+        self.proj = ortho_helper.build_matrix();
+        self.aspect_ratio = ortho_helper.get_aspect_ratio();
     }
 
     pub fn get_offset(&self) -> (f32, f32) {
@@ -81,8 +92,6 @@ impl Camera {
     }
 
     pub fn screen_to_world_point(&self, screen_point: ::math::Point2) -> ::math::Point2 {
-        // debug!("screen x,y: ({},{})", screen_point.get_x(), screen_point.get_y());
-
         let view_depth = self.proj.zfar() - self.proj.znear();
 
         ::math::Point2::new(

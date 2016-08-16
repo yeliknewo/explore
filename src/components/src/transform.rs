@@ -1,5 +1,6 @@
 use nalgebra::{Translation, ToHomogeneous};
 
+#[derive(Debug)]
 pub struct Transform {
     isometry: ::nalgebra::Isometry3<::utils::Coord>,
     scale: ::nalgebra::Vector3<::utils::Coord>,

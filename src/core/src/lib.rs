@@ -19,9 +19,19 @@ extern crate math;
 pub mod event;
 pub mod game;
 
-pub fn start<F>(setup: F) -> Result<(), ::utils::Error>
-where F: for<'a> Fn(&'a mut specs::Planner<::utils::Delta>, &'a mut sys::render::System, &'a mut gfx_device_gl::Factory) -> Result<(), ::utils::Error>
-{
+pub fn start() -> Result<(), ::utils::Error> {
+    let (width, height): (u32, u32) = (640, 480);
+
+    let fov = 90.0;
+
+    let znear = 0.0;
+
+    let zfar = 10.0;
+
+    let aspect_ratio = width as ::utils::Coord / height as ::utils::Coord;
+
+    let ortho_helper = ::math::OrthographicHelper::new(aspect_ratio, fov, znear, zfar);
+
     let ((mut out_color, mut out_depth), mut factory, encoder, window, mut device) = ::graphics::build_graphics(640, 480);
 
     let (mut event_dev, game_event) = ::event::DevEventHub::new();
@@ -31,7 +41,18 @@ where F: for<'a> Fn(&'a mut specs::Planner<::utils::Delta>, &'a mut sys::render:
     event_dev.send_to_render(sys::render::RecvEvent::Encoder(encoder.clone_empty()));
     event_dev.send_to_render(sys::render::RecvEvent::Encoder(encoder));
 
-    let game = try!(game::Game::new(&mut factory, game_event, ::math::Point2::new(out_color.get_dimensions().0 as f32, out_color.get_dimensions().1 as f32), setup));
+    let game = try!(
+        game::Game::new(
+            &mut factory,
+            game_event,
+            ::math::Point2::new(0.0, 0.0),
+            ::math::Point2::new(
+                out_color.get_dimensions().0 as f32,
+                out_color.get_dimensions().1 as f32
+            ),
+            ortho_helper
+        )
+    );
 
     std::thread::spawn(|| {
         let mut game = game;

@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub struct GameEventHub {
     pub control_channel: Option<::sys::control::Channel>,
     pub render_channel: Option<::sys::render::Channel>,
@@ -18,6 +19,7 @@ impl GameEventHub {
     }
 }
 
+#[derive(Debug)]
 pub struct DevEventHub {
     send_to_control: ::std::sync::mpsc::Sender<::sys::control::RecvEvent>,
     recv_from_control: ::std::sync::mpsc::Receiver<::sys::control::SendEvent>,

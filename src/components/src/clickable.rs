@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub struct Clickable {
     pub clicked: bool,
     pub hitbox: ::math::Rect,

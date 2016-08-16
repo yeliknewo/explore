@@ -86,6 +86,7 @@ impl Bundle {
     }
 }
 
+#[derive(Debug)]
 pub struct Packet {
     vertices: Vec<Vertex>,
     indices: Vec<Index>,

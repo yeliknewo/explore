@@ -2,6 +2,7 @@ pub type Channel = (
     ::std::sync::mpsc::Receiver<RecvEvent>
 );
 
+#[derive(Debug)]
 pub enum RecvEvent {
     Exit,
 }
@@ -15,14 +16,13 @@ pub struct Game {
 }
 
 impl Game {
-    pub fn new<F>(
+    pub fn new(
         factory: &mut ::gfx_device_gl::Factory,
         mut game_event_hub: ::event::GameEventHub,
-        screen_size: ::math::Point2,
-        setup: F,
-    ) -> Result<Game, ::utils::Error>
-    where F: for<'a> Fn(&'a mut ::specs::Planner<::utils::Delta>, &'a mut ::sys::render::System, &'a mut ::gfx_device_gl::Factory) -> Result<(), ::utils::Error>
-    {
+        mouse_location: ::math::Point2,
+        screen_resolution: ::math::Point2,
+        ortho_helper: ::math::OrthographicHelper
+    ) -> Result<Game, ::utils::Error> {
         let mut planner = {
             let mut w = ::specs::World::new();
 
@@ -43,7 +43,41 @@ impl Game {
             },
         }));
 
-        try!(setup(&mut planner, &mut renderer, factory));
+        planner.mut_world().create_now()
+            .with(::comps::Camera::new_from_ortho_helper(
+                ::nalgebra::Point3::new(0.0, 0.0, 2.0),
+                ::nalgebra::Point3::new(0.0, 0.0, 0.0),
+                ::nalgebra::Vector3::new(0.0, 1.0, 0.0),
+                &ortho_helper,
+                true
+            ))
+            .build();
+
+        let square_packet = ::art::make_square_render(factory);
+
+        let square_render = try!(renderer.add_render_type_texture(factory, try!(square_packet)));
+
+        for y in -10..10i32 {
+            for x in -10..10i32 {
+                planner.mut_world().create_now()
+                    .with(square_render)
+                    .with(::comps::Transform::new(
+                        ::nalgebra::Isometry3::new(
+                            ::nalgebra::Vector3::new(x as f32, y as f32, 0.0),
+                            ::nalgebra::Vector3::new(0.0, 0.0, 0.0),
+                        ),
+                        ::nalgebra::Vector3::new(1.0, 1.0, 1.0)
+                    ))
+                    .with(::comps::RenderData::new_texture([
+                        (x + 10) as f32 / 20.0,
+                        (y + 10) as f32 / 20.0,
+                        ((x + 10) as f32 / 20.0 + (y + 10) as f32 / 20.0) / 2.0,
+                        1.0
+                    ]))
+                    .with(::comps::Clickable::new(::math::Rect::new_from_coords(0.0, 0.0, 1.0, 1.0)))
+                    .build();
+            }
+        }
 
         planner.add_system(renderer, "renderer", 10);
         planner.add_system(::sys::control::System::new(match game_event_hub.control_channel.take() {
@@ -52,7 +86,7 @@ impl Game {
                 error!("game event hub control channel was none");
                 return Err(::utils::Error::Logged);
             }
-        }, ::math::Point2::new(10.0, 10.0), screen_size), "control", 30);
+        }, ::math::Point2::new(10.0, 10.0), mouse_location, screen_resolution, ortho_helper), "control", 30);
 
         Ok(Game {
             planner: planner,
