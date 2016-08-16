@@ -39,7 +39,7 @@ impl Rect {
     }
 
     pub fn check_collide_point(&self, point: Point2) -> bool {
-        println!("Rect Points: ({},{}) ({},{})", self.get_bot_left().get_x(), self.get_bot_left().get_y(), self.get_top_right().get_x(), self.get_top_right().get_y());
+        trace!("Rect Points: ({},{}) ({},{})", self.get_bot_left().get_x(), self.get_bot_left().get_y(), self.get_top_right().get_x(), self.get_top_right().get_y());
         self.get_bot_left().get_x() <= point.get_x() &&
         self.get_bot_left().get_y() <= point.get_y() &&
         self.get_top_right().get_x() >= point.get_x() &&

@@ -124,14 +124,14 @@ impl<'a> ::specs::System<::utils::Delta> for System {
         });
 
         if let Some(input) = self.mouse_button.pop() {
-            println!("Mouse Button Received");
+            trace!("Mouse Button Received");
             match input {
                 (true, ::glutin::MouseButton::Left) => {
-                    println!("Left Mouse Button Pressed");
+                    trace!("Left Mouse Button Pressed");
                     for (t, mut c, mut td) in (&transform, &mut clickable, &mut texture_data).iter() {
-                        // println!("Found Entity with Clickable and Texture Data");
+                        trace!("Found Entity with Clickable and Texture Data");
                         if  c.hitbox.check_collide_point_with_offset(self.mouse_location, t.get_gui_offset()) {
-                            println!("Hitbox Collided with Mouse Location");
+                            trace!("Hitbox Collided with Mouse Location");
                             c.clicked = true;
                             td.set_tint([1.0, 1.0, 1.0, 1.0]);
                         } else {

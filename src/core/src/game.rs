@@ -79,7 +79,7 @@ impl Game {
             Err(::std::sync::mpsc::TryRecvError::Empty) => {
                 if self.current_fps_delta > self.target_fps_delta {
                     self.planner.dispatch(self.current_fps_delta);
-                    // println!("Estimated FPS: {}", self.current_fps_delta * 60.0 * 60.0);
+                    info!("Estimated FPS: {}", self.current_fps_delta * 60.0 * 60.0);
                     self.current_fps_delta = 0.0;
                 } else {
                     ::std::thread::sleep(::std::time::Duration::new(0, ((self.target_fps_delta - self.current_fps_delta* 0.99) * 1e9) as u32));
