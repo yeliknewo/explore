@@ -7,9 +7,9 @@ pub struct GameEventHub {
 
 impl GameEventHub {
     pub fn new(
-        control_channel: (::std::sync::mpsc::Sender<::sys::control::SendEvent>, ::std::sync::mpsc::Receiver<::sys::control::RecvEvent>),
-        render_channel: (::std::sync::mpsc::Sender<::sys::render::SendEvent>, ::std::sync::mpsc::Receiver<::sys::render::RecvEvent>),
-        game_channel: ::std::sync::mpsc::Receiver<::game::RecvEvent>,
+        control_channel: ::sys::control::Channel,
+        render_channel: ::sys::render::Channel,
+        game_channel: ::game::Channel,
     ) -> GameEventHub {
         GameEventHub {
             control_channel: Some(control_channel),
@@ -26,24 +26,26 @@ pub struct DevEventHub {
     send_to_render: ::std::sync::mpsc::Sender<::sys::render::RecvEvent>,
     recv_from_render: ::std::sync::mpsc::Receiver<::sys::render::SendEvent>,
     send_to_game: ::std::sync::mpsc::Sender<::game::RecvEvent>,
+    recv_from_game: ::std::sync::mpsc::Receiver<::game::SendEvent>,
 }
 
 impl DevEventHub{
     pub fn new() -> (DevEventHub, GameEventHub) {
-        // let (s###, r###) = mpsc::channel();
 
         let (send_to_control, recv_to_control) = ::std::sync::mpsc::channel();
         let (send_from_control, recv_from_control) = ::std::sync::mpsc::channel();
         let (send_to_render, recv_to_render) = ::std::sync::mpsc::channel();
         let (send_from_render, recv_from_render) = ::std::sync::mpsc::channel();
         let (send_to_game, recv_to_game) = ::std::sync::mpsc::channel();
+        let (send_from_game, recv_from_game) = ::std::sync::mpsc::channel();
+
         (
             DevEventHub::new_internal(
                 send_to_control, recv_from_control,
                 send_to_render, recv_from_render,
-                send_to_game
+                send_to_game, recv_from_game
             ),
-            GameEventHub::new((send_from_control, recv_to_control), (send_from_render, recv_to_render), recv_to_game)
+            GameEventHub::new((send_from_control, recv_to_control), (send_from_render, recv_to_render), (send_from_game, recv_to_game))
         )
     }
 
@@ -53,6 +55,7 @@ impl DevEventHub{
         send_to_render: ::std::sync::mpsc::Sender<::sys::render::RecvEvent>,
         recv_from_render: ::std::sync::mpsc::Receiver<::sys::render::SendEvent>,
         send_to_game: ::std::sync::mpsc::Sender<::game::RecvEvent>,
+        recv_from_game: ::std::sync::mpsc::Receiver<::game::SendEvent>,
     ) -> DevEventHub
     {
         DevEventHub {
@@ -61,6 +64,7 @@ impl DevEventHub{
             send_to_render: send_to_render,
             recv_from_render: recv_from_render,
             send_to_game: send_to_game,
+            recv_from_game: recv_from_game,
         }
     }
 
@@ -115,6 +119,16 @@ impl DevEventHub{
         match self.send_to_game.send(event) {
             Ok(()) => (),
             Err(err) => error!("send to game error: {}", err),
+        }
+    }
+
+    pub fn recv_from_game(&mut self) -> Result<::game::SendEvent, ::utils::Error> {
+        match self.recv_from_game.recv() {
+            Ok(event) => Ok(event),
+            Err(err) => {
+                error!("recv from game err: {}", err);
+                Err(::utils::Error::Logged)
+            }
         }
     }
 

@@ -8,6 +8,7 @@ pub struct Camera {
     proj: ::nalgebra::OrthographicMatrix3<::utils::Coord>,
     aspect_ratio: ::utils::Coord,
     is_main: bool,
+    dirty: bool,
 }
 
 impl Camera {
@@ -27,6 +28,7 @@ impl Camera {
             proj: proj,
             aspect_ratio: aspect_ratio,
             is_main: is_main,
+            dirty: true,
         }
     }
 
@@ -56,6 +58,7 @@ impl Camera {
     pub fn set_offset(&mut self, offset: ::math::Point2) {
         self.set_eye(::nalgebra::Point3::new(offset.get_x(), offset.get_y(), 2.0));
         self.set_target(::nalgebra::Point3::new(offset.get_x(), offset.get_y(), 0.0));
+        self.dirty = true;
     }
 
     fn set_eye(&mut self, eye: ::nalgebra::Point3<::utils::Coord>) {
@@ -69,6 +72,7 @@ impl Camera {
     pub fn set_proj(&mut self, ortho_helper: & ::math::OrthographicHelper) {
         self.proj = ortho_helper.build_matrix();
         self.aspect_ratio = ortho_helper.get_aspect_ratio();
+        self.dirty = true;
     }
 
     pub fn get_offset(&self) -> ::math::Point2 {
@@ -95,9 +99,13 @@ impl Camera {
             (((1.0 - screen_point.get_y()) * 2.0 - 1.0) * view_depth / self.aspect_ratio) * 4.0 / 5.0 + self.eye.y
         );
 
-        // debug!("world point: ({},{})", world_point.get_x(), world_point.get_y());
-
         world_point
+    }
+
+    pub fn take_dirty(&mut self) -> bool {
+        let temp = self.dirty;
+        self.dirty = false;
+        temp
     }
 }
 

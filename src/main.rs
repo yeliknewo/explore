@@ -12,11 +12,11 @@ extern crate utils;
 fn main() {
     env_logger::init().unwrap_or_else(
         |err|
-            panic!("Unable to initiate env logger: {}", err)
+            panic!("unable to initiate env logger: {}", err)
     );
 
     match core::start() {
-        Ok(()) => info!("Game exiting"),
+        Ok(()) => info!("game exiting"),
         Err(err) => error!("core start error: {}", err),
     }
 }

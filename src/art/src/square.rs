@@ -19,7 +19,7 @@ pub fn make_square_render(factory: &mut ::gfx_device_gl::Factory) -> Result<::gr
             return Err(::utils::Error::Logged);
         },
     };
-    texture_path.push("square.jpg");
+    texture_path.push("Tiles/grass.png");
 
     let texture_file = match ::std::fs::File::open(texture_path) {
         Ok(texture_file) => texture_file,

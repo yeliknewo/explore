@@ -8,6 +8,7 @@ pub type Channel = (
 pub enum SendEvent {
     Encoder(::gfx::Encoder<::gfx_device_gl::Resources, ::gfx_device_gl::CommandBuffer>),
     Error(::utils::Error),
+    Exited,
 }
 
 pub enum RecvEvent {
@@ -24,6 +25,7 @@ pub struct System {
     texture_bundles: ::std::sync::Arc<Vec<::graphics::texture::Bundle>>,
     color_shaders: ::graphics::Shaders,
     texture_shaders: ::graphics::Shaders,
+    exited: bool,
 }
 
 impl System {
@@ -50,6 +52,7 @@ impl System {
             texture_bundles: ::std::sync::Arc::new(Vec::new()),
             color_shaders: try!(::graphics::color::make_shaders()),
             texture_shaders: try!(::graphics::texture::make_shaders()),
+            exited: false,
         })
     }
 
@@ -192,18 +195,18 @@ impl System {
     fn render(&mut self, arg: &::specs::RunArg, mut encoder: ::gfx::Encoder<::gfx_device_gl::Resources, ::gfx_device_gl::CommandBuffer>) -> Result<(), ::utils::Error> {
         use specs::Join;
 
-        let (draw, transform, camera, render_data) = arg.fetch(|w| {
-            (w.read::<::comps::RenderType>(), w.read::<::comps::Transform>(), w.read::<::comps::Camera>(), w.read::<::comps::RenderData>())
+        let (draw, transform, mut camera, mut render_data) = arg.fetch(|w| {
+            (w.read::<::comps::RenderType>(), w.read::<::comps::Transform>(), w.write::<::comps::Camera>(), w.write::<::comps::RenderData>())
         });
 
         encoder.clear(&self.out_color, [0.0, 0.0, 0.0, 1.0]);
         encoder.clear_depth(&self.out_depth, 1.0);
 
-        let (view, proj) = {
-            let camera = {
+        let (view, proj, dirty_cam) = {
+            let mut camera = {
                 let mut camera_opt = None;
 
-                for c in (&camera).iter() {
+                for c in (&mut camera).iter() {
                     camera_opt = Some(c);
                 }
 
@@ -216,32 +219,47 @@ impl System {
                 }
             };
 
-            (camera.get_view(), camera.get_proj())
+            (camera.get_view(), camera.get_proj(), camera.take_dirty())
         };
 
-        for (d, t, render_data) in (&draw, &transform, &render_data).iter() {
-            let projection_data = ::graphics::ProjectionData {
-                model: t.get_model(),
-                view: view,
-                proj: proj,
-            };
+        for (d, t, rd) in (&draw, &transform, &mut render_data).iter() {
             match d.renderer_type {
                 ::graphics::RendererType::Color => {
                     let b = &self.color_bundles[d.id];
-                    encoder.update_constant_buffer(&b.data.projection_cb, &projection_data);
+
+                    if dirty_cam {
+                        let projection_data = ::graphics::ProjectionData {
+                            model: t.get_model(),
+                            view: view,
+                            proj: proj,
+                        };
+                        encoder.update_constant_buffer(&b.data.projection_cb, &projection_data);
+                    }
+
                     b.encode(&mut encoder);
                 }
                 ::graphics::RendererType::Texture => {
                     let b = &self.texture_bundles[d.id];
-                    encoder.update_constant_buffer(&b.data.projection_cb, &projection_data);
-                    let texture_data = ::graphics::texture::TextureData {
-                        tint: try!(render_data.get_tint()),
-                    };
-                    encoder.update_constant_buffer(&b.data.texture_data, &texture_data);
+
+                    if dirty_cam {
+                        let projection_data = ::graphics::ProjectionData {
+                            model: t.get_model(),
+                            view: view,
+                            proj: proj,
+                        };
+                        encoder.update_constant_buffer(&b.data.projection_cb, &projection_data);
+                    }
+
+                    if rd.take_dirty() {
+                        let texture_data = ::graphics::texture::TextureData {
+                            tint: try!(rd.get_tint()),
+                        };
+                        encoder.update_constant_buffer(&b.data.texture_data, &texture_data);
+                    }
+
                     b.encode(&mut encoder);
                 },
             }
-
         }
 
         match self.channel.0.send(SendEvent::Encoder(encoder)) {
@@ -301,6 +319,11 @@ impl System {
             },
             RecvEvent::Exit => {
                 self.exit(arg);
+                match self.channel.0.send(SendEvent::Exited) {
+                    Ok(()) => (),
+                    Err(err) => error!("process event exit send error: {}", err),
+                }
+                self.exited = true;
                 Ok(false)
             },
         }
@@ -309,6 +332,11 @@ impl System {
 
 impl ::specs::System<::utils::Delta> for System {
     fn run(&mut self, arg: ::specs::RunArg, _: ::utils::Delta) {
+        if self.exited {
+            arg.fetch(|_| ());
+            return;
+        }
+
         let mut event = match self.channel.1.recv() {
             Ok(event) => event,
             Err(err) => {

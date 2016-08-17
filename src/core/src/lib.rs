@@ -84,6 +84,10 @@ pub fn start() -> Result<(), ::utils::Error> {
                 device.cleanup();
             },
             sys::render::SendEvent::Error(err) => return Err(err),
+            sys::render::SendEvent::Exited => {
+                error!("render system has exited while in main loop");
+                return Err(::utils::Error::Logged);
+            },
         }
 
         match event_dev.try_recv_from_control() {
@@ -99,6 +103,10 @@ pub fn start() -> Result<(), ::utils::Error> {
                     },
                     utils::Error::Logged => return Err(utils::Error::Logged),
                 },
+                sys::control::SendEvent::Exited => {
+                    error!("control system has exited while in main loop");
+                    return Err(::utils::Error::Logged);
+                }
             },
             Err(::utils::Error::Empty) => (),
             Err(::utils::Error::Logged) => return Err(::utils::Error::Logged),
@@ -108,6 +116,27 @@ pub fn start() -> Result<(), ::utils::Error> {
     event_dev.send_to_render(sys::render::RecvEvent::Exit);
     event_dev.send_to_control(sys::control::RecvEvent::Exit);
     event_dev.send_to_game(game::RecvEvent::Exit);
+
+    // while match try!(event_dev.recv_from_render()) {
+    //     ::sys::render::SendEvent::Exited => false,
+    //     _ => true,
+    // } {
+    //
+    // }
+    //
+    // while match try!(event_dev.recv_from_control()) {
+    //     ::sys::control::SendEvent::Exited => false,
+    //     _ => true,
+    // } {
+    //
+    // }
+    //
+    // while match try!(event_dev.recv_from_game()) {
+    //     ::game::SendEvent::Exited => false,
+    //     // _ => true,
+    // } {
+    //
+    // }
 
     Ok(())
 }

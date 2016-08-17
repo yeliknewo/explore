@@ -42,7 +42,7 @@ pub fn load_texture<R, F>(factory: &mut F, data: &[u8])
                 R: ::gfx::Resources, F: ::gfx::Factory<R> {
     use std::io::Cursor;
     use gfx::tex as t;
-    let img = match ::image::load(Cursor::new(data), ::image::JPEG) {
+    let img = match ::image::load(Cursor::new(data), ::image::PNG) {
         Ok(image) => image,
         Err(err) => {
             error!("image load error: {}", err);

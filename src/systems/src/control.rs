@@ -19,6 +19,7 @@ pub enum RecvEvent {
 pub enum SendEvent {
     Resize,
     Error(::utils::Error),
+    Exited,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -39,6 +40,7 @@ pub struct System {
     mouse_button: Vec<(bool, ::glutin::MouseButton)>,
     screen_resolution: ::math::Point2,
     ortho_helper: ::math::OrthographicHelper,
+    exited: bool,
 }
 
 impl System {
@@ -60,6 +62,7 @@ impl System {
             mouse_button: vec!(),
             screen_resolution: screen_resolution,
             ortho_helper: ortho_helper,
+            exited: false,
         }
     }
 
@@ -111,9 +114,21 @@ impl System {
                     },
                     RecvEvent::Exit => {
                         //use to save
+
+                        match self.channel.0.send(SendEvent::Exited) {
+                            Ok(()) => (),
+                            Err(err) => error!("check input exit channel 0 send error: {}", err),
+                        }
+                        self.exited = true;
+                        return;
                     },
                 },
-                Err(_) => return,
+                Err(::std::sync::mpsc::TryRecvError::Empty) => return,
+                Err(err) => {
+                    error!("check input channel try recv error: {}", err);
+                    self.exited = true;
+                    return;
+                },
             }
         }
     }
@@ -124,6 +139,11 @@ impl<'a> ::specs::System<::utils::Delta> for System {
         use specs::Join;
 
         self.check_input();
+
+        if self.exited {
+            arg.fetch(|_| ());
+            return;
+        }
 
         let (mut camera, mut clickable, mut texture_data, transform) = arg.fetch(|w| {
             (w.write::<::comps::Camera>(), w.write::<::comps::Clickable>(), w.write::<::comps::RenderData>(), w.read::<::comps::Transform>())

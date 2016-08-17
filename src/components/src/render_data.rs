@@ -1,6 +1,8 @@
 #[derive(Debug)]
 pub struct RenderData {
     texture_data: Option<TextureData>,
+    dirty: bool,
+    dirty_2: bool, // required because double buffering
 }
 
 impl ::specs::Component for RenderData {
@@ -13,6 +15,8 @@ impl RenderData {
             texture_data: Some(TextureData {
                 tint: tint,
             }),
+            dirty: true,
+            dirty_2: true,
         }
     }
 
@@ -24,6 +28,7 @@ impl RenderData {
                 return;
             }
         }.tint = tint;
+        self.set_dirty();
     }
 
     pub fn get_tint(&self) -> Result<[f32; 4], ::utils::Error> {
@@ -35,9 +40,23 @@ impl RenderData {
             }
         }.tint.clone())
     }
+
+    fn set_dirty(&mut self) {
+        self.dirty = true;
+        self.dirty_2 = true;
+    }
+
+    pub fn take_dirty(&mut self) -> bool {
+        let temp = self.dirty | self.dirty_2;
+        self.dirty = false;
+        if self.dirty {
+            self.dirty_2 = false;
+        }
+        temp
+    }
 }
 
 #[derive(Debug)]
-pub struct TextureData {
-    pub tint: [f32; 4],
+struct TextureData {
+    tint: [f32; 4],
 }

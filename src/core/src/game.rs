@@ -1,10 +1,16 @@
 pub type Channel = (
-    ::std::sync::mpsc::Receiver<RecvEvent>
+    ::std::sync::mpsc::Sender<SendEvent>,
+    ::std::sync::mpsc::Receiver<RecvEvent>,
 );
 
 #[derive(Debug)]
 pub enum RecvEvent {
     Exit,
+}
+
+#[derive(Debug)]
+pub enum SendEvent {
+    Exited,
 }
 
 pub struct Game {
@@ -111,7 +117,7 @@ impl Game {
         self.current_fps_delta += delta;
         self.last_time = new_time;
 
-        match self.channel.try_recv() {
+        match self.channel.1.try_recv() {
             Err(::std::sync::mpsc::TryRecvError::Empty) => {
                 if self.current_fps_delta > self.target_fps_delta {
                     self.planner.dispatch(self.current_fps_delta);
