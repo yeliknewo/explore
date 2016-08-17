@@ -91,11 +91,11 @@ impl Camera {
         let view_depth = self.proj.zfar() - self.proj.znear();
 
         let world_point = ::math::Point2::new(
-            (((screen_point.get_x() * 2.0) - 1.0) * view_depth + self.eye.x),
-            ((((1.0 - screen_point.get_y()) * 2.0) - 1.0) * view_depth + self.eye.y) / self.aspect_ratio
+            (((screen_point.get_x() * 2.0) - 1.0) * view_depth) * 4.0 / 5.0 + self.eye.x,
+            (((1.0 - screen_point.get_y()) * 2.0 - 1.0) * view_depth / self.aspect_ratio) * 4.0 / 5.0 + self.eye.y
         );
 
-        debug!("world point: ({},{})", world_point.get_x(), world_point.get_y());
+        // debug!("world point: ({},{})", world_point.get_x(), world_point.get_y());
 
         world_point
     }

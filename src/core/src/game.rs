@@ -57,8 +57,8 @@ impl Game {
 
         let square_render = try!(renderer.add_render_type_texture(factory, try!(square_packet)));
 
-        for y in -10..10i32 {
-            for x in -10..10i32 {
+        for y in -10..11i32 {
+            for x in -10..11i32 {
                 planner.mut_world().create_now()
                     .with(square_render)
                     .with(::comps::Transform::new(

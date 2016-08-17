@@ -156,6 +156,7 @@ impl<'a> ::specs::System<::utils::Delta> for System {
                 for &(width, height) in &self.resize {
                     self.ortho_helper.set_aspect_ratio(width as ::utils::Coord / height as ::utils::Coord);
                     c.set_proj(&self.ortho_helper);
+                    self.screen_resolution = ::math::Point2::new(width as ::utils::Coord, height as ::utils::Coord);
                 }
                 camera_opt = Some(c);
                 break;
