@@ -30,6 +30,8 @@ impl Game {
         screen_resolution: ::math::Point2,
         ortho_helper: ::math::OrthographicHelper
     ) -> Result<Game, ::utils::Error> {
+        let default_tint = [0.5, 0.5, 0.5, 1.0];
+
         let mut planner = {
             let mut w = ::specs::World::new();
 
@@ -60,14 +62,26 @@ impl Game {
             ))
             .build();
 
-        let square_packet = ::art::make_square_render(factory);
+        let grass_render = {
+            let packet = ::art::make_grass_render(factory);
+            try!(renderer.add_render_type_texture(factory, try!(packet)))
+        };
 
-        let square_render = try!(renderer.add_render_type_texture(factory, try!(square_packet)));
+        let grass_center_render = {
+            let packet = ::art::make_grass_center_render(factory);
+            try!(renderer.add_render_type_texture(factory, try!(packet)))
+        };
 
         for y in -10..11i32 {
             for x in -10..11i32 {
                 planner.mut_world().create_now()
-                    .with(square_render)
+                    .with({
+                        if y < 10 {
+                            grass_center_render
+                        } else {
+                            grass_render
+                        }
+                    })
                     .with(::comps::Transform::new(
                         ::nalgebra::Isometry3::new(
                             ::nalgebra::Vector3::new(x as f32, y as f32, 0.0),
@@ -75,25 +89,36 @@ impl Game {
                         ),
                         ::nalgebra::Vector3::new(1.0, 1.0, 1.0)
                     ))
-                    .with(::comps::RenderData::new_texture([
-                        (x + 10) as f32 / 20.0,
-                        (y + 10) as f32 / 20.0,
-                        ((x + 10) as f32 / 20.0 + (y + 10) as f32 / 20.0) / 2.0,
-                        1.0
-                    ]))
+                    // .with(::comps::RenderData::new_texture([
+                    //     (x + 10) as f32 / 20.0,
+                    //     (y + 10) as f32 / 20.0,
+                    //     ((x + 10) as f32 / 20.0 + (y + 10) as f32 / 20.0) / 2.0,
+                    //     1.0
+                    // ]))
+                    .with(::comps::RenderData::new_texture(default_tint))
                     .with(::comps::Clickable::new(::math::Rect::new_from_coords(0.0, 0.0, 1.0, 1.0)))
                     .build();
             }
         }
 
         planner.add_system(renderer, "renderer", 10);
-        planner.add_system(::sys::control::System::new(match game_event_hub.control_channel.take() {
-            Some(channel) => channel,
-            None => {
-                error!("game event hub control channel was none");
-                return Err(::utils::Error::Logged);
-            }
-        }, ::math::Point2::new(10.0, 10.0), mouse_location, screen_resolution, ortho_helper), "control", 30);
+        planner.add_system(
+            ::sys::control::System::new(
+                match game_event_hub.control_channel.take() {
+                    Some(channel) => channel,
+                    None => {
+                        error!("game event hub control channel was none");
+                        return Err(::utils::Error::Logged);
+                    }
+                },
+                ::math::Point2::new(10.0, 10.0),
+                mouse_location,
+                screen_resolution,
+                ortho_helper,
+                default_tint
+            ),
+            "control",
+            30);
 
         Ok(Game {
             planner: planner,

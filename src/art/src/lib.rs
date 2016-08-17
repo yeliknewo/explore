@@ -10,4 +10,4 @@ extern crate utils;
 
 mod square;
 
-pub use self::square::make_square_render;
+pub use self::square::{make_grass_render, make_grass_center_render};

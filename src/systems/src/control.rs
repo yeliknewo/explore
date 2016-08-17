@@ -40,6 +40,7 @@ pub struct System {
     mouse_button: Vec<(bool, ::glutin::MouseButton)>,
     screen_resolution: ::math::Point2,
     ortho_helper: ::math::OrthographicHelper,
+    default_tint: [::utils::Coord; 4],
     exited: bool,
 }
 
@@ -49,7 +50,8 @@ impl System {
         move_speed_mult: ::math::Point2,
         mouse_location: ::math::Point2,
         screen_resolution: ::math::Point2,
-        ortho_helper: ::math::OrthographicHelper
+        ortho_helper: ::math::OrthographicHelper,
+        default_tint: [::utils::Coord; 4]
     ) -> System
     {
         System {
@@ -62,6 +64,7 @@ impl System {
             mouse_button: vec!(),
             screen_resolution: screen_resolution,
             ortho_helper: ortho_helper,
+            default_tint: default_tint,
             exited: false,
         }
     }
@@ -199,8 +202,9 @@ impl<'a> ::specs::System<::utils::Delta> for System {
                         if  c.hitbox.check_collide_point_with_offset(camera.screen_to_world_point(self.mouse_location), t.get_gui_offset()) {
                             c.clicked = true;
                             td.set_tint([1.0, 1.0, 1.0, 1.0]);
-                        } else {
+                        } else if c.clicked {
                             c.clicked = false;
+                            td.set_tint(self.default_tint);
                         }
                     }
                 },

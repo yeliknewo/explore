@@ -101,10 +101,19 @@ impl Packet {
         texture: ::gfx::handle::ShaderResourceView<::gfx_device_gl::Resources, [f32; 4]>,
         rasterizer: ::gfx::state::Rasterizer
     ) -> Packet {
+        Packet::new_option(vertices, indices, Some(texture), rasterizer)
+    }
+
+    pub fn new_option(
+        vertices: Vec<Vertex>,
+        indices: Vec<Index>,
+        texture: Option<::gfx::handle::ShaderResourceView<::gfx_device_gl::Resources, [f32; 4]>>,
+        rasterizer: ::gfx::state::Rasterizer
+    ) -> Packet {
         Packet {
             vertices: vertices,
             indices: indices,
-            texture: Some(texture),
+            texture: texture,
             rasterizer: rasterizer,
         }
     }
@@ -131,5 +140,7 @@ impl Packet {
         }
     }
 
-
+    pub fn set_texture(&mut self, texture: ::gfx::handle::ShaderResourceView<::gfx_device_gl::Resources, [f32; 4]>) {
+        self.texture = Some(texture);
+    }
 }
