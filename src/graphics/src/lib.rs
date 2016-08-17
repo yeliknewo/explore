@@ -15,6 +15,7 @@ use std::io::Read;
 
 pub mod color;
 pub mod texture;
+pub mod spritesheet;
 
 pub type ColorFormat = gfx::format::Rgba8;
 pub type DepthFormat = gfx::format::DepthStencil;

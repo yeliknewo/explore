@@ -8,7 +8,8 @@ extern crate env_logger;
 extern crate graphics;
 extern crate utils;
 
-pub mod square;
+pub mod texture;
+pub mod spritesheet;
 
 pub const GRASS_MID: usize = 0;
 pub const GRASS_CENTER: usize = 1;
