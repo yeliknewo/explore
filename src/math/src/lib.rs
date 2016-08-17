@@ -11,7 +11,7 @@ pub use self::ortho_helper::OrthographicHelper;
 
 pub type Float = f32;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub struct Rect {
     corners: LineSeg,
 }
@@ -34,7 +34,7 @@ impl Rect {
     }
 
     pub fn get_corners(&self) -> LineSeg {
-        self.corners
+        self.corners.clone()
     }
 
     pub fn get_bot_left(&self) -> Point2 {
@@ -52,13 +52,9 @@ impl Rect {
         self.get_top_right().get_x() >= point.get_x() &&
         self.get_top_right().get_y() >= point.get_y()
     }
-
-    pub fn check_collide_point_with_offset(&self, offset: Point2, point: Point2) -> bool {
-        self.check_collide_point(point.add(offset))
-    }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub struct LineSeg {
     a: Point2,
     b: Point2,
@@ -77,15 +73,15 @@ impl LineSeg {
     }
 
     pub fn get_a(&self) -> Point2 {
-        self.a
+        self.a.clone()
     }
 
     pub fn get_b(&self) -> Point2 {
-        self.b
+        self.b.clone()
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub struct Point2 {
     x: Float,
     y: Float,
@@ -99,6 +95,10 @@ impl Point2 {
         }
     }
 
+    pub fn zero() -> Point2 {
+        Point2::new(0.0, 0.0)
+    }
+
     pub fn get_x(&self) -> Float {
         self.x
     }
@@ -107,7 +107,86 @@ impl Point2 {
         self.y
     }
 
-    pub fn add(&self, other: Point2) -> Point2 {
+    pub fn set_x(&mut self, value: Float) {
+        self.x = value;
+    }
+
+    pub fn set_y(&mut self, value: Float) {
+        self.y = value;
+    }
+
+    pub fn normalized(&self) -> Point2 {
+        self.clone() / self.length()
+    }
+
+    pub fn length(&self) -> Float {
+        (self.get_x().powi(2) + self.get_y().powi(2)).sqrt()
+    }
+
+    pub fn is_zero(&self) -> bool {
+        self.get_x() == 0.0 && self.get_y() == 0.0
+    }
+
+    pub fn is_normal(&self) -> bool {
+        self.get_x().is_normal() && self.get_y().is_normal()
+    }
+
+    pub fn is_finite(&self) -> bool {
+        self.get_x().is_finite() && self.get_y().is_finite()
+    }
+
+    pub fn abs(&self) -> Point2 {
+        Point2::new(self.get_x().abs(), self.get_y().abs())
+    }
+}
+
+impl std::ops::Add<Point2> for Point2 {
+    type Output = Point2;
+
+    fn add(self, other: Point2) -> Point2 {
         Point2::new(self.get_x() + other.get_x(), self.get_y() + other.get_y())
+    }
+}
+
+impl std::ops::Sub<Point2> for Point2 {
+    type Output = Point2;
+
+    fn sub(self, other: Point2) -> Point2 {
+        Point2::new(self.get_x() - other.get_x(), self.get_y() - other.get_y())
+    }
+}
+
+impl std::ops::Div<Float> for Point2 {
+    type Output = Point2;
+
+    fn div(self, other: Float) -> Point2 {
+        Point2::new(self.get_x() / other, self.get_y() / other)
+    }
+}
+
+impl std::ops::SubAssign<Point2> for Point2 {
+    fn sub_assign(&mut self, other: Point2) {
+        self.x -= other.get_x();
+        self.y -= other.get_y();
+    }
+}
+
+impl std::ops::MulAssign<Point2> for Point2 {
+    fn mul_assign(&mut self, other: Point2) {
+        self.x *= other.get_x();
+        self.y *= other.get_y();
+    }
+}
+
+impl std::ops::MulAssign<::utils::Coord> for Point2 {
+    fn mul_assign(&mut self, other: ::utils::Coord) {
+        self.x *= other;
+        self.y *= other;
+    }
+}
+
+impl std::fmt::Display for Point2 {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "({},{})", self.get_x(), self.get_y())
     }
 }

@@ -8,6 +8,4 @@ extern crate env_logger;
 extern crate graphics;
 extern crate utils;
 
-mod square;
-
-pub use self::square::{make_grass_render, make_grass_center_render};
+pub mod square;

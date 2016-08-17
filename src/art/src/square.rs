@@ -65,3 +65,11 @@ pub fn make_grass_center_render(factory: &mut ::gfx_device_gl::Factory) -> Resul
 
     Ok(packet)
 }
+
+pub fn make_player_render(factory: &mut ::gfx_device_gl::Factory) -> Result<::graphics::texture::Packet, ::utils::Error> {
+    let mut packet = make_square_render();
+
+    packet.set_texture(try!(load_texture(factory, "Player/p1_stand.png")));
+
+    Ok(packet)
+}

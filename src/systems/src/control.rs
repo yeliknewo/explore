@@ -40,7 +40,7 @@ pub struct System {
     mouse_button: Vec<(bool, ::glutin::MouseButton)>,
     screen_resolution: ::math::Point2,
     ortho_helper: ::math::OrthographicHelper,
-    default_tint: [::utils::Coord; 4],
+    default_tint: [f32; 4],
     exited: bool,
 }
 
@@ -137,7 +137,7 @@ impl System {
     }
 }
 
-impl<'a> ::specs::System<::utils::Delta> for System {
+impl ::specs::System<::utils::Delta> for System {
     fn run(&mut self, arg: ::specs::RunArg, time: ::utils::Delta) {
         use specs::Join;
 
@@ -199,7 +199,7 @@ impl<'a> ::specs::System<::utils::Delta> for System {
             match input {
                 (true, ::glutin::MouseButton::Left) => {
                     for (t, mut c, mut td) in (&transform, &mut clickable, &mut texture_data).iter() {
-                        if  c.hitbox.check_collide_point_with_offset(camera.screen_to_world_point(self.mouse_location), t.get_gui_offset()) {
+                        if  c.hitbox.check_collide_point(camera.screen_to_world_point(self.mouse_location.clone()) + t.get_gui_offset()) {
                             c.clicked = true;
                             td.set_tint([1.0, 1.0, 1.0, 1.0]);
                         } else if c.clicked {

@@ -40,6 +40,9 @@ impl Game {
             w.register::<::comps::Camera>();
             w.register::<::comps::RenderData>();
             w.register::<::comps::Clickable>();
+            w.register::<::comps::Dwarf>();
+            w.register::<::comps::Living>();
+            w.register::<::comps::Physical>();
 
             ::specs::Planner::<::utils::Delta>::new(w, 4)
         };
@@ -63,12 +66,17 @@ impl Game {
             .build();
 
         let grass_render = {
-            let packet = ::art::make_grass_render(factory);
+            let packet = ::art::square::make_grass_render(factory);
             try!(renderer.add_render_type_texture(factory, try!(packet)))
         };
 
         let grass_center_render = {
-            let packet = ::art::make_grass_center_render(factory);
+            let packet = ::art::square::make_grass_center_render(factory);
+            try!(renderer.add_render_type_texture(factory, try!(packet)))
+        };
+
+        let player_render = {
+            let packet = ::art::square::make_player_render(factory);
             try!(renderer.add_render_type_texture(factory, try!(packet)))
         };
 
@@ -101,7 +109,23 @@ impl Game {
             }
         }
 
+        planner.mut_world().create_now()
+            .with(player_render)
+            .with(::comps::Transform::new(
+                ::nalgebra::Isometry3::new(
+                    ::nalgebra::Vector3::new(0.0, 12.0, 1.0),
+                    ::nalgebra::Vector3::new(0.0, 0.0, 0.0)
+                ),
+                ::nalgebra::Vector3::new(1.0, 1.0, 1.0)
+            ))
+            .with(::comps::RenderData::new_texture(default_tint))
+            .with(::comps::Physical::new_zero())
+            .with(::comps::Living::new())
+            .with(::comps::Dwarf::new())
+            .build();
+
         planner.add_system(renderer, "renderer", 10);
+
         planner.add_system(
             ::sys::control::System::new(
                 match game_event_hub.control_channel.take() {
@@ -119,6 +143,24 @@ impl Game {
             ),
             "control",
             30);
+
+        planner.add_system(
+            ::sys::physical::System::new(),
+            "physical",
+            15
+        );
+
+        planner.add_system(
+            ::sys::living::System::new(),
+            "living",
+            20
+        );
+
+        planner.add_system(
+            ::sys::dwarf::System::new(),
+            "dwarf",
+            25
+        );
 
         Ok(Game {
             planner: planner,
