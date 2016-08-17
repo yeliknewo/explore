@@ -43,6 +43,7 @@ impl Game {
             w.register::<::comps::Dwarf>();
             w.register::<::comps::Living>();
             w.register::<::comps::Physical>();
+            w.register::<::comps::TextureStorage>();
 
             ::specs::Planner::<::utils::Delta>::new(w, 4)
         };
@@ -65,19 +66,21 @@ impl Game {
             ))
             .build();
 
+        let textures = ::art::make_texture_storage_vec(factory);
+
         let grass_render = {
-            let packet = ::art::square::make_grass_render(factory);
-            try!(renderer.add_render_type_texture(factory, try!(packet)))
+            let packet = ::art::square::make_square_render(textures[::art::GRASS_MID].clone());
+            try!(renderer.add_render_type_texture(factory, packet))
         };
 
         let grass_center_render = {
-            let packet = ::art::square::make_grass_center_render(factory);
-            try!(renderer.add_render_type_texture(factory, try!(packet)))
+            let packet = ::art::square::make_square_render(textures[::art::GRASS_CENTER].clone());
+            try!(renderer.add_render_type_texture(factory, packet))
         };
 
         let player_render = {
-            let packet = ::art::square::make_player_render(factory);
-            try!(renderer.add_render_type_texture(factory, try!(packet)))
+            let packet = ::art::square::make_square_render(textures[::art::P1_STAND].clone());
+            try!(renderer.add_render_type_texture(factory, packet))
         };
 
         for y in -10..11i32 {
@@ -120,8 +123,29 @@ impl Game {
             ))
             .with(::comps::RenderData::new(default_tint))
             .with(::comps::Physical::new_zero())
-            .with(::comps::Living::new())
+            .with(::comps::Living::new(
+                vec!(
+                    ::art::P1_WALK01,
+                    ::art::P1_WALK02,
+                    ::art::P1_WALK03,
+                    ::art::P1_WALK04,
+                    ::art::P1_WALK05,
+                    ::art::P1_WALK06,
+                    ::art::P1_WALK07,
+                    ::art::P1_WALK08,
+                    ::art::P1_WALK09,
+                    ::art::P1_WALK10,
+                    ::art::P1_WALK11
+                ),
+                vec!(
+                    ::art::P1_HURT
+                )
+            ))
             .with(::comps::Dwarf::new())
+            .build();
+
+        planner.mut_world().create_now()
+            .with(::comps::TextureStorage::new(textures))
             .build();
 
         planner.add_system(renderer, "renderer", 10);

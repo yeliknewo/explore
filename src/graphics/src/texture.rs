@@ -1,3 +1,5 @@
+use ::gfx::Factory;
+
 pub type Index = u32;
 
 pub fn make_shaders() -> Result<::Shaders, ::utils::Error> {
@@ -37,26 +39,24 @@ impl Vertex {
     }
 }
 
-pub fn load_texture<R, F>(factory: &mut F, data: &[u8])
-                -> Result<::gfx::handle::ShaderResourceView<R, [f32; 4]>, ::utils::Error> where
-                R: ::gfx::Resources, F: ::gfx::Factory<R> {
-    use std::io::Cursor;
-    use gfx::tex as t;
-    let img = match ::image::load(Cursor::new(data), ::image::PNG) {
+pub fn load_texture<P>(factory: &mut ::gfx_device_gl::Factory, path: P) -> Result<::gfx::handle::ShaderResourceView<::gfx_device_gl::Resources, [f32; 4]>, ::utils::Error>
+where P: AsRef<::std::path::Path>
+{
+    let image = match ::image::open(path) {
         Ok(image) => image,
         Err(err) => {
             error!("image load error: {}", err);
             return Err(::utils::Error::Logged);
-        }
+        },
     }.to_rgba();
-    let (width, height) = img.dimensions();
-    let kind = t::Kind::D2(width as t::Size, height as t::Size, t::AaMode::Single);
-    let (_, view) = match factory.create_texture_const_u8::<::ColorFormat>(kind, &[&img]) {
+    let (width, height) = image.dimensions();
+    let kind = ::gfx::tex::Kind::D2(width as ::gfx::tex::Size, height as ::gfx::tex::Size, ::gfx::tex::AaMode::Single);
+    let (_, view) = match factory.create_texture_const_u8::<::ColorFormat>(kind, &[&image]) {
         Ok(data) => data,
         Err(err) => {
-            error!("factroy create texture const error: {}", err);
+            error!("factory create texture const error: {}", err);
             return Err(::utils::Error::Logged);
-        }
+        },
     };
     Ok(view)
 }
@@ -90,31 +90,22 @@ impl Bundle {
 pub struct Packet {
     vertices: Vec<Vertex>,
     indices: Vec<Index>,
-    texture: Option<::gfx::handle::ShaderResourceView<::gfx_device_gl::Resources, [f32; 4]>>,
     rasterizer: ::gfx::state::Rasterizer,
+    texture: Option<::gfx::handle::ShaderResourceView<::gfx_device_gl::Resources, [f32; 4]>>,
 }
 
 impl Packet {
     pub fn new(
         vertices: Vec<Vertex>,
         indices: Vec<Index>,
-        texture: ::gfx::handle::ShaderResourceView<::gfx_device_gl::Resources, [f32; 4]>,
-        rasterizer: ::gfx::state::Rasterizer
-    ) -> Packet {
-        Packet::new_option(vertices, indices, Some(texture), rasterizer)
-    }
-
-    pub fn new_option(
-        vertices: Vec<Vertex>,
-        indices: Vec<Index>,
-        texture: Option<::gfx::handle::ShaderResourceView<::gfx_device_gl::Resources, [f32; 4]>>,
-        rasterizer: ::gfx::state::Rasterizer
+        rasterizer: ::gfx::state::Rasterizer,
+        texture: ::gfx::handle::ShaderResourceView<::gfx_device_gl::Resources, [f32; 4]>
     ) -> Packet {
         Packet {
             vertices: vertices,
             indices: indices,
-            texture: texture,
             rasterizer: rasterizer,
+            texture: Some(texture),
         }
     }
 
@@ -130,17 +121,7 @@ impl Packet {
         self.rasterizer
     }
 
-    pub fn get_texture(&mut self) -> Result<::gfx::handle::ShaderResourceView<::gfx_device_gl::Resources, [f32; 4]>, ::utils::Error> {
-        match self.texture.take() {
-            Some(texture) => Ok(texture),
-            None => {
-                error!("get texture was none");
-                return Err(::utils::Error::Logged);
-            }
-        }
-    }
-
-    pub fn set_texture(&mut self, texture: ::gfx::handle::ShaderResourceView<::gfx_device_gl::Resources, [f32; 4]>) {
-        self.texture = Some(texture);
+    pub fn get_texture(&mut self) -> ::gfx::handle::ShaderResourceView<::gfx_device_gl::Resources, [f32; 4]> {
+        self.texture.take().unwrap()
     }
 }

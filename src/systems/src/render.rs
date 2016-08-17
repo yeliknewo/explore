@@ -133,7 +133,7 @@ impl System {
             texture_packet.get_vertices(),
             texture_packet.get_indices(),
             texture_packet.get_rasterizer(),
-            try!(texture)
+            texture
         )
     }
 
@@ -195,8 +195,8 @@ impl System {
     fn render(&mut self, arg: &::specs::RunArg, mut encoder: ::gfx::Encoder<::gfx_device_gl::Resources, ::gfx_device_gl::CommandBuffer>) -> Result<(), ::utils::Error> {
         use specs::Join;
 
-        let (draw, transform, mut camera, mut render_data) = arg.fetch(|w| {
-            (w.read::<::comps::RenderType>(), w.read::<::comps::Transform>(), w.write::<::comps::Camera>(), w.write::<::comps::RenderData>())
+        let (textures, draw, transform, mut camera, mut render_data) = arg.fetch(|w| {
+            (w.read::<::comps::TextureStorage>(), w.read::<::comps::RenderType>(), w.read::<::comps::Transform>(), w.write::<::comps::Camera>(), w.write::<::comps::RenderData>())
         });
 
         encoder.clear(&self.out_color, [0.0, 0.0, 0.0, 1.0]);
@@ -222,7 +222,7 @@ impl System {
             (camera.get_view(), camera.get_proj(), camera.take_dirty())
         };
 
-        for (d, t, rd) in (&draw, &transform, &mut render_data).iter() {
+        for (tex, d, t, rd) in (&textures, &draw, &transform, &mut render_data).iter() {
             match d.renderer_type {
                 ::graphics::RendererType::Color => {
                     let b = &self.color_bundles[d.id];
@@ -255,6 +255,8 @@ impl System {
                             tint: rd.get_tint(),
                         };
                         encoder.update_constant_buffer(&b.data.texture_data, &texture_data);
+
+                        encoder.update_texture(&b.data.texture, (tex.get_texture(rd.get_texture_index()[rd.get_texture_index_index()]).unwrap(), &b.data.texture.1));
                     }
 
                     b.encode(&mut encoder);

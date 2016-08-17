@@ -81,7 +81,7 @@ impl LineSeg {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Point2 {
     x: Float,
     y: Float,

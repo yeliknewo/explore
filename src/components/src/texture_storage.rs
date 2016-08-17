@@ -8,14 +8,10 @@ impl ::specs::Component for Component {
 }
 
 impl Component {
-    pub fn new() -> Component {
+    pub fn new(vec: Vec<::gfx::handle::ShaderResourceView<::gfx_device_gl::Resources, [f32; 4]>>) -> Component {
         Component {
-            textures: vec!(),
+            textures: vec,
         }
-    }
-
-    pub fn get_mut_textures(&mut self) -> &mut Vec<::gfx::handle::ShaderResourceView<::gfx_device_gl::Resources, [f32; 4]>> {
-        &mut self.textures
     }
 
     pub fn get_texture(&self, index: usize) -> Option<&::gfx::handle::ShaderResourceView<::gfx_device_gl::Resources, [f32; 4]>> {
