@@ -2,6 +2,8 @@
 extern crate log;
 extern crate env_logger;
 
+pub mod fps_counter;
+
 pub type Delta = f32;
 pub type Coord = f32;
 
