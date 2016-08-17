@@ -23,7 +23,7 @@ gfx_defines! {
 
         texture_data: gfx::ConstantBuffer<TextureData> = "b_TextureData",
 
-        out_color: ::gfx::RenderTarget<::ColorFormat> = "Target0",
+        out_color: ::gfx::BlendTarget<::ColorFormat> = ("Target0", gfx::state::MASK_ALL, gfx::preset::blend::ALPHA),
         out_depth: ::gfx::DepthTarget<::DepthFormat> = ::gfx::preset::depth::LESS_EQUAL_WRITE,
     }
 }

@@ -12,7 +12,7 @@ fn make_square_render() -> ::graphics::texture::Packet {
         0, 3, 2, 2, 1, 0,
     );
 
-    let rasterizer = ::gfx::state::Rasterizer::new_fill().with_cull_back();
+    let rasterizer = ::gfx::state::Rasterizer::new_fill();
 
     ::graphics::texture::Packet::new_option(vertices, indices, None, rasterizer)
 }
