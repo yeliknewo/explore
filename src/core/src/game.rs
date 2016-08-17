@@ -103,7 +103,7 @@ impl Game {
                     //     ((x + 10) as f32 / 20.0 + (y + 10) as f32 / 20.0) / 2.0,
                     //     1.0
                     // ]))
-                    .with(::comps::RenderData::new_texture(default_tint))
+                    .with(::comps::RenderData::new(default_tint))
                     .with(::comps::Clickable::new(::math::Rect::new_from_coords(0.0, 0.0, 1.0, 1.0)))
                     .build();
             }
@@ -118,7 +118,7 @@ impl Game {
                 ),
                 ::nalgebra::Vector3::new(1.0, 1.0, 1.0)
             ))
-            .with(::comps::RenderData::new_texture(default_tint))
+            .with(::comps::RenderData::new(default_tint))
             .with(::comps::Physical::new_zero())
             .with(::comps::Living::new())
             .with(::comps::Dwarf::new())

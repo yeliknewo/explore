@@ -1,7 +1,7 @@
 use nalgebra::ToHomogeneous;
 
 #[derive(Debug)]
-pub struct Camera {
+pub struct Component {
     eye: ::nalgebra::Point3<::utils::Coord>,
     target: ::nalgebra::Point3<::utils::Coord>,
     up: ::nalgebra::Vector3<::utils::Coord>,
@@ -11,7 +11,7 @@ pub struct Camera {
     dirty: bool,
 }
 
-impl Camera {
+impl Component {
     pub fn new(
         eye: ::nalgebra::Point3<::utils::Coord>,
         target: ::nalgebra::Point3<::utils::Coord>,
@@ -19,9 +19,9 @@ impl Camera {
         proj: ::nalgebra::OrthographicMatrix3<::utils::Coord>,
         aspect_ratio: ::utils::Coord,
         is_main: bool
-    ) -> Camera
+    ) -> Component
     {
-        Camera {
+        Component {
             eye: eye,
             target: target,
             up: up,
@@ -41,8 +41,8 @@ impl Camera {
         near: ::utils::Coord,
         far: ::utils::Coord,
         is_main: bool
-    ) -> Camera {
-        Camera::new(eye, target, up, ::nalgebra::OrthographicMatrix3::new_with_fov(aspect_ratio, fov, near, far), aspect_ratio, is_main)
+    ) -> Component {
+        Component::new(eye, target, up, ::nalgebra::OrthographicMatrix3::new_with_fov(aspect_ratio, fov, near, far), aspect_ratio, is_main)
     }
 
     pub fn new_from_ortho_helper(
@@ -51,8 +51,8 @@ impl Camera {
         up: ::nalgebra::Vector3<::utils::Coord>,
         ortho_helper: &::math::OrthographicHelper,
         is_main: bool
-    ) -> Camera {
-        Camera::new(eye, target, up, ortho_helper.build_matrix(), ortho_helper.get_aspect_ratio(), is_main)
+    ) -> Component {
+        Component::new(eye, target, up, ortho_helper.build_matrix(), ortho_helper.get_aspect_ratio(), is_main)
     }
 
     pub fn set_offset(&mut self, offset: ::math::Point2) {
@@ -109,6 +109,6 @@ impl Camera {
     }
 }
 
-impl ::specs::Component for Camera {
-    type Storage = ::specs::VecStorage<Camera>;
+impl ::specs::Component for Component {
+    type Storage = ::specs::VecStorage<Component>;
 }

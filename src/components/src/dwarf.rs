@@ -1,16 +1,16 @@
 #[derive(Debug)]
-pub struct Dwarf {
+pub struct Component {
     target_tile: ::math::Point2,
     speed: ::math::Float,
 }
 
-impl ::specs::Component for Dwarf {
-    type Storage = ::specs::VecStorage<Dwarf>;
+impl ::specs::Component for Component {
+    type Storage = ::specs::VecStorage<Component>;
 }
 
-impl Dwarf {
-    pub fn new() -> Dwarf {
-        Dwarf {
+impl Component {
+    pub fn new() -> Component {
+        Component {
             target_tile: ::math::Point2::zero(),
             speed: 1.0,
         }

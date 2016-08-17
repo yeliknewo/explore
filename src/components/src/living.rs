@@ -1,15 +1,15 @@
 #[derive(Debug)]
-pub struct Living {
+pub struct Component {
     state: State,
 }
 
-impl ::specs::Component for Living {
-    type Storage = ::specs::VecStorage<Living>;
+impl ::specs::Component for Component {
+    type Storage = ::specs::VecStorage<Component>;
 }
 
-impl Living {
-    pub fn new() -> Living {
-        Living {
+impl Component {
+    pub fn new() -> Component {
+        Component {
             state: State::Idle,
         }
     }

@@ -252,7 +252,7 @@ impl System {
 
                     if rd.take_dirty() {
                         let texture_data = ::graphics::texture::TextureData {
-                            tint: try!(rd.get_tint()),
+                            tint: rd.get_tint(),
                         };
                         encoder.update_constant_buffer(&b.data.texture_data, &texture_data);
                     }

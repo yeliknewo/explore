@@ -1,21 +1,21 @@
 use nalgebra::{Translation, ToHomogeneous};
 
 #[derive(Debug)]
-pub struct Transform {
+pub struct Component {
     isometry: ::nalgebra::Isometry3<::utils::Coord>,
     scale: ::nalgebra::Vector3<::utils::Coord>,
 }
 
-impl Transform {
-    pub fn new_identity() -> Transform {
-        Transform::new(
+impl Component {
+    pub fn new_identity() -> Component {
+        Component::new(
             ::nalgebra::Isometry3::new(::nalgebra::Vector3::new(0.0, 0.0, 0.0), ::nalgebra::Vector3::new(0.0, 0.0, 0.0)),
             ::nalgebra::Vector3::new(1.0, 1.0, 1.0)
         )
     }
 
-    pub fn new(isometry: ::nalgebra::Isometry3<::utils::Coord>, scale: ::nalgebra::Vector3<::utils::Coord>) -> Transform {
-        Transform {
+    pub fn new(isometry: ::nalgebra::Isometry3<::utils::Coord>, scale: ::nalgebra::Vector3<::utils::Coord>) -> Component {
+        Component {
             isometry: isometry,
             scale: scale,
         }
@@ -44,6 +44,6 @@ impl Transform {
     }
 }
 
-impl ::specs::Component for Transform {
-    type Storage = ::specs::VecStorage<Transform>;
+impl ::specs::Component for Component {
+    type Storage = ::specs::VecStorage<Component>;
 }

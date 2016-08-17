@@ -1,16 +1,16 @@
 #[derive(Debug)]
-pub struct Clickable {
+pub struct Component {
     pub clicked: bool,
     pub hitbox: ::math::Rect,
 }
 
-impl ::specs::Component for Clickable {
-    type Storage = ::specs::VecStorage<Clickable>;
+impl ::specs::Component for Component {
+    type Storage = ::specs::VecStorage<Component>;
 }
 
-impl Clickable {
-    pub fn new(hitbox: ::math::Rect) -> Clickable {
-        Clickable {
+impl Component {
+    pub fn new(hitbox: ::math::Rect) -> Component {
+        Component {
             clicked: false,
             hitbox: hitbox,
         }

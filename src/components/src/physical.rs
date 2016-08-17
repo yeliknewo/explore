@@ -1,29 +1,29 @@
 #[derive(Debug)]
-pub struct Physical {
+pub struct Component {
     speed: ::math::Point2,
     friction: ::math::Point2,
     speed_break: ::math::Point2,
 }
 
-impl ::specs::Component for Physical {
-    type Storage = ::specs::VecStorage<Physical>;
+impl ::specs::Component for Component {
+    type Storage = ::specs::VecStorage<Component>;
 }
 
-impl Physical {
+impl Component {
     pub fn new(
         speed: ::math::Point2,
         friction: ::math::Point2,
         speed_break: ::math::Point2
-    ) -> Physical {
-        Physical {
+    ) -> Component {
+        Component {
             speed: speed,
             friction: friction,
             speed_break: speed_break,
         }
     }
 
-    pub fn new_zero() -> Physical {
-        Physical::new(
+    pub fn new_zero() -> Component {
+        Component::new(
             ::math::Point2::new(0.0, 0.0),
             ::math::Point2::new(1.0, 1.0),
             ::math::Point2::new(0.01, 0.01)
