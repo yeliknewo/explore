@@ -28,26 +28,28 @@ impl ::specs::System<::utils::Delta> for System {
 
         for (mut d, mut l, t, p) in (&mut dwarf, &mut living, &transform, &physical).iter() {
             if let Some(target) = target_opt.as_ref() {
-                *d.get_mut_target_tile() = target.clone() - t.get_pos();
-            }
+                *d.get_mut_target_tile_opt() = Some(target.clone() - t.get_pos()); //unwraps are ok because of this
 
-            let normal = {
-                let length = d.get_target_tile().length();
-                if length < d.get_speed() * time {
-                    if length < p.get_speed_break().length() {
-                        d.get_target_tile() / time
+                if d.get_target_tile().unwrap().length() >= p.get_speed_break().length() {
+                    let normal = {
+                        let length = d.get_target_tile().unwrap().length();
+                        if length < d.get_speed() * time {
+                            d.get_target_tile().unwrap().clone() / time
+                        } else {
+                            d.get_target_tile().unwrap().normalized() * d.get_speed()
+                        }
+                    };
+
+                    if normal.is_finite() {
+                        l.walk(normal);
                     } else {
-                        d.get_target_tile()
+                        debug!("non finite dwarf target tile: {}", normal);
                     }
                 } else {
-                    d.get_target_tile().normalized() * d.get_speed()
+                    l.idle();
                 }
-            };
-
-            if normal.is_finite() {
-                l.walk(normal);
             } else {
-                debug!("non finite dwarf target tile: {}", normal);
+                l.idle();
             }
         }
     }
