@@ -34,7 +34,9 @@ impl ::specs::System<::utils::Delta> for System {
                     let normal = {
                         let length = d.get_target_tile().unwrap().length();
                         if length < d.get_speed() * time {
-                            d.get_target_tile().unwrap().clone() / time
+                            l.walk_to(d.get_target_tile().unwrap().clone());
+                            l.idle();
+                            continue;
                         } else {
                             d.get_target_tile().unwrap().normalized() * d.get_speed()
                         }

@@ -27,6 +27,11 @@ impl ::specs::System<::utils::Delta> for System {
 
             *p.get_mut_speed() *= friction;
 
+            if let Some(move_to) = p.get_move_to() {
+                t.set_position(move_to);
+                continue;
+            }
+
             let mut speed = p.get_speed();
 
             if speed.length() < p.get_speed_break().length() {

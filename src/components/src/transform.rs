@@ -21,6 +21,11 @@ impl Component {
         }
     }
 
+    pub fn set_position(&mut self, pos: ::math::Point2) {
+        self.isometry.translation.x = pos.get_x();
+        self.isometry.translation.y = pos.get_y();
+    }
+
     pub fn add_position(&mut self, pos_delta: ::math::Point2) {
         self.isometry.translation.x += pos_delta.get_x();
         self.isometry.translation.y += pos_delta.get_y();

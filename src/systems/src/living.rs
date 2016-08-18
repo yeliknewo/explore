@@ -30,6 +30,14 @@ impl ::specs::System<::utils::Delta> for System {
                     }
                     *p.get_mut_speed() = dir.clone();
                 },
+                &(::comps::living::State::Walking, ::comps::living::StateData::MoveTo(ref location)) => {
+                    let mirror = location.get_x().is_sign_positive();
+                    if mirror != rd.get_mirror() {
+                        rd.set_mirror(mirror);
+                    }
+                    *p.get_mut_speed() = ::math::Point2::zero();
+                    p.move_to(location.clone());
+                }
                 &(::comps::living::State::Falling, ::comps::living::StateData::Falling(speed)) => {
                     *p.get_mut_speed().get_mut_y() = speed;
                 },

@@ -145,7 +145,7 @@ impl Game {
                 ::nalgebra::Vector3::new(1.0, 1.0, 1.0)
             ))
             .with(::comps::RenderData::new(default_tint, ::art::spritesheet::p1::STAND, ::art::spritesheet::p1::SIZE))
-            .with(::comps::Physical::new(::math::Point2::new(0.0, 0.0), ::math::Point2::new(1.0, 1.0), ::math::Point2::new(0.02, 0.02)))
+            .with(::comps::Physical::new(::math::Point2::new(0.0, 0.0), ::math::Point2::new(1.0, 1.0), ::math::Point2::new(0.01, 0.01)))
             .with(::comps::Living::new(
                 p1_idle,
                 p1_walk,

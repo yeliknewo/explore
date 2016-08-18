@@ -66,6 +66,10 @@ impl Component {
         self.set_future_state_pair((State::Walking, StateData::Walking(direction)));
     }
 
+    pub fn walk_to(&mut self, location: ::math::Point2) {
+        self.set_future_state_pair((State::Walking, StateData::MoveTo(location)));
+    }
+
     pub fn fall(&mut self, speed: ::utils::Coord) {
         self.set_future_state_pair((State::Falling, StateData::Falling(speed)));
     }
@@ -100,6 +104,7 @@ pub enum StateData {
     Idle,
     Walking(::math::Point2),
     Falling(::utils::Coord),
+    MoveTo(::math::Point2),
 }
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]

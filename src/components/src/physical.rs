@@ -3,6 +3,7 @@ pub struct Component {
     speed: ::math::Point2,
     friction: ::math::Point2,
     speed_break: ::math::Point2,
+    move_to: Option<::math::Point2>,
 }
 
 impl ::specs::Component for Component {
@@ -19,6 +20,7 @@ impl Component {
             speed: speed,
             friction: friction,
             speed_break: speed_break,
+            move_to: None,
         }
     }
 
@@ -30,8 +32,16 @@ impl Component {
         )
     }
 
+    pub fn move_to(&mut self, location: ::math::Point2) {
+        self.move_to = Some(location);
+    }
+
     pub fn get_mut_speed(&mut self) -> &mut ::math::Point2 {
         &mut self.speed
+    }
+
+    pub fn get_move_to(&mut self) -> Option<::math::Point2> {
+        self.move_to.take()
     }
 
     pub fn get_mut_friction(&mut self) -> &mut ::math::Point2 {
