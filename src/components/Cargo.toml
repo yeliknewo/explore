@@ -14,3 +14,4 @@ env_logger = "*"
 graphics = { path="../graphics" }
 utils = { path="../utils" }
 math = { path="../math" }
+art = { path="../art" }

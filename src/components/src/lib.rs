@@ -9,6 +9,7 @@ extern crate env_logger;
 extern crate graphics;
 extern crate utils;
 extern crate math;
+extern crate art;
 
 pub mod camera;
 pub mod clickable;

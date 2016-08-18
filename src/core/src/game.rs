@@ -128,6 +128,9 @@ impl Game {
             }
         }
 
+        let mut p1_walk = vec!();
+        p1_walk.extend_from_slice(&::art::spritesheet::p1::WALK);
+
         planner.mut_world().create_now()
             .with(p1_render)
             .with(::comps::Transform::new(
@@ -139,7 +142,12 @@ impl Game {
             ))
             .with(::comps::RenderData::new(default_tint, ::art::spritesheet::p1::STAND, ::art::spritesheet::p1::SIZE))
             .with(::comps::Physical::new_zero())
-            .with(::comps::Living::new())
+            .with(::comps::Living::new(
+                p1_walk,
+                vec!(
+                    ::art::spritesheet::p1::HURT
+                )
+            ))
             .with(::comps::Dwarf::new())
             .build();
 

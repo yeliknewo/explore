@@ -2,6 +2,9 @@
 pub struct Component {
     state: State,
     last_state: State,
+    walking_rects: Vec<[f32; 4]>,
+    falling_rects: Vec<[f32; 4]>,
+    frame_count: usize,
 }
 
 impl ::specs::Component for Component {
@@ -9,10 +12,13 @@ impl ::specs::Component for Component {
 }
 
 impl Component {
-    pub fn new() -> Component {
+    pub fn new(walking_rects: Vec<[f32; 4]>, falling_rects: Vec<[f32; 4]>) -> Component {
         Component {
             state: State::Idle,
             last_state: State::Idle,
+            walking_rects: walking_rects,
+            falling_rects: falling_rects,
+            frame_count: 0,
         }
     }
 
@@ -24,6 +30,39 @@ impl Component {
     pub fn fall(&mut self, speed: ::utils::Coord) {
         self.last_state = self.state.clone();
         self.state = State::Falling(speed);
+    }
+
+    pub fn get_walking_rects(&self) -> &[[f32; 4]] {
+        self.walking_rects.as_slice()
+    }
+
+    pub fn get_falling_rects(&self) -> &[[f32; 4]] {
+        self.falling_rects.as_slice()
+    }
+
+    fn cycle_anim(&mut self, rect_length: usize) {
+        self.frame_count += 1;
+        if self.frame_count >= rect_length {
+            self.frame_count = 0;
+        }
+    }
+
+    pub fn get_next_walking(&mut self) -> &[f32; 4] {
+        let len = self.walking_rects.len();
+        self.cycle_anim(len);
+        match self.walking_rects.get(self.frame_count) {
+            Some(rect) => rect,
+            None => ::art::spritesheet::ERROR,
+        }
+    }
+
+    pub fn get_next_falling(&mut self) -> &[f32; 4] {
+        let len = self.falling_rects.len();
+        self.cycle_anim(len);
+        match self.falling_rects.get(self.frame_count) {
+            Some(rect) => rect,
+            None => ::art::spritesheet::ERROR,
+        }
     }
 
     pub fn get_state(&self) -> State {

@@ -15,6 +15,8 @@ pub fn make_square_render() -> ::graphics::spritesheet::Packet {
     ::graphics::spritesheet::Packet::new(vertices, indices, rasterizer)
 }
 
+pub const ERROR: &'static [f32; 4] = &[0.0, 0.0, 1.0, 1.0];
+
 pub mod p1 {
     pub const SIZE: [f32; 2] = [508.0, 288.0];
 
@@ -34,6 +36,20 @@ pub mod p1 {
     pub const WALK09: [f32; 4] = [219.0, 98.0, 72.0, 97.0];
     pub const WALK10: [f32; 4] = [365.0, 0.0, 72.0, 97.0];
     pub const WALK11: [f32; 4] = [292.0, 98.0, 72.0, 97.0];
+
+    pub const WALK: [[f32; 4]; 11] = [
+        WALK01,
+        WALK02,
+        WALK03,
+        WALK04,
+        WALK05,
+        WALK06,
+        WALK07,
+        WALK08,
+        WALK09,
+        WALK10,
+        WALK11
+    ];
 }
 
 pub mod tiles {
