@@ -66,33 +66,69 @@ impl Game {
             ))
             .build();
 
-        let textures = ::art::make_texture_storage_vec(factory);
+        // let textures = ::art::make_texture_storage_vec(factory);
 
-        let grass_render = {
-            let packet = ::art::square::make_square_render(textures[::art::GRASS_MID].clone());
-            try!(renderer.add_render_type_texture(factory, packet))
+
+
+        let packet = ::art::spritesheet::make_square_render();
+
+        let assets_folder = match ::find_folder::Search::ParentsThenKids(3, 3).for_folder("assets") {
+            Ok(path) => path,
+            Err(err) => {
+                error!("error finding assets folder: {}", err);
+                return Err(::utils::Error::Logged);
+            }
         };
 
-        let grass_center_render = {
-            let packet = ::art::square::make_square_render(textures[::art::GRASS_CENTER].clone());
-            try!(renderer.add_render_type_texture(factory, packet))
-        };
+        let tiles_render = try!(
+            renderer.add_render_type_spritesheet(
+                factory,
+                &packet,
+                try!(
+                    ::graphics::texture::load_texture(
+                        factory,
+                        assets_folder.join(
+                            "Tiles/tiles_spritesheet.png"
+                        )
+                    )
+                )
+            )
+        );
 
-        let player_render = {
-            let packet = ::art::square::make_square_render(textures[::art::P1_STAND].clone());
-            try!(renderer.add_render_type_texture(factory, packet))
-        };
+        let p1_render = try!(
+            renderer.add_render_type_spritesheet(
+                factory,
+                &packet,
+                try!(
+                    ::graphics::texture::load_texture(
+                        factory,
+                        assets_folder.join(
+                            "Player/p1_spritesheet.png"
+                        )
+                    )
+                )
+            )
+        );
+
+        // let grass_render = {
+        //     let packet = ::art::spritesheet::make_square_render(textures[::art::GRASS_MID].clone());
+        //     try!(renderer.add_render_type_texture(factory, packet))
+        // };
+        //
+        // let grass_center_render = {
+        //     let packet = ::art::square::make_square_render(textures[::art::GRASS_CENTER].clone());
+        //     try!(renderer.add_render_type_texture(factory, packet))
+        // };
+        //
+        // let player_render = {
+        //     let packet = ::art::square::make_square_render(textures[::art::P1_STAND].clone());
+        //     try!(renderer.add_render_type_texture(factory, packet))
+        // };
 
         for y in -10..11i32 {
             for x in -10..11i32 {
                 planner.mut_world().create_now()
-                    .with({
-                        if y < 10 {
-                            grass_center_render
-                        } else {
-                            grass_render
-                        }
-                    })
+                    .with(tiles_render)
                     .with(::comps::Transform::new(
                         ::nalgebra::Isometry3::new(
                             ::nalgebra::Vector3::new(x as f32, y as f32, 0.0),
@@ -113,7 +149,7 @@ impl Game {
         }
 
         planner.mut_world().create_now()
-            .with(player_render)
+            .with(p1_render)
             .with(::comps::Transform::new(
                 ::nalgebra::Isometry3::new(
                     ::nalgebra::Vector3::new(0.0, 12.0, 1.0),

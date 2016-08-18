@@ -23,8 +23,10 @@ pub struct System {
     out_depth: ::gfx::handle::DepthStencilView<::gfx_device_gl::Resources, ::graphics::DepthFormat>,
     color_bundles: ::std::sync::Arc<Vec<::graphics::color::Bundle>>,
     texture_bundles: ::std::sync::Arc<Vec<::graphics::texture::Bundle>>,
+    spritesheet_bundles: ::std::sync::Arc<Vec<::graphics::spritesheet::Bundle>>,
     color_shaders: ::graphics::Shaders,
     texture_shaders: ::graphics::Shaders,
+    spritesheet_shaders: ::graphics::Shaders,
     exited: bool,
 }
 
@@ -50,8 +52,10 @@ impl System {
             out_depth: out_depth,
             color_bundles: ::std::sync::Arc::new(Vec::new()),
             texture_bundles: ::std::sync::Arc::new(Vec::new()),
+            spritesheet_bundles: ::std::sync::Arc::new(Vec::new()),
             color_shaders: try!(::graphics::color::make_shaders()),
             texture_shaders: try!(::graphics::texture::make_shaders()),
+            spritesheet_shaders: try!(::graphics::spritesheet::make_shaders()),
             exited: false,
         })
     }
@@ -161,7 +165,12 @@ impl System {
             }
         };
 
-        let pso = match factory.create_pipeline_from_program(&program, ::gfx::Primitive::TriangleList, rasterizer, ::graphics::texture::pipe::new()) {
+        let pso = match factory.create_pipeline_from_program(
+            &program,
+            ::gfx::Primitive::TriangleList,
+            rasterizer,
+            ::graphics::texture::pipe::new()
+        ) {
             Ok(pso) => pso,
             Err(err) => {
                 error!("add render type texture raw create pipeline error: {}", err);
@@ -186,6 +195,76 @@ impl System {
             }
         };
         bundles.push(::graphics::texture::Bundle::new(slice, pso, data));
+        Ok(::comps::RenderType {
+            id: id,
+            renderer_type: ::graphics::RendererType::Texture,
+        })
+    }
+
+    pub fn add_render_type_spritesheet(&mut self,
+        factory: &mut ::gfx_device_gl::Factory,
+        packet: &::graphics::spritesheet::Packet,
+        texture: ::gfx::handle::ShaderResourceView<::gfx_device_gl::Resources, [f32; 4]>
+    ) -> Result<::comps::RenderType, ::utils::Error> {
+
+        self.add_render_type_spritesheet_raw(factory, packet.get_vertices(), packet.get_indices(), packet.get_rasterizer(), texture)
+    }
+
+    fn add_render_type_spritesheet_raw(&mut self,
+        factory: &mut ::gfx_device_gl::Factory,
+        vertices: &[::graphics::spritesheet::Vertex],
+        indices: &[::graphics::spritesheet::Index],
+        rasterizer: ::gfx::state::Rasterizer,
+        spritesheet: ::gfx::handle::ShaderResourceView<::gfx_device_gl::Resources, [f32; 4]>
+    ) -> Result<::comps::RenderType, ::utils::Error> {
+        let shader_set = match factory.create_shader_set(self.spritesheet_shaders.get_vertex_shader(), self.spritesheet_shaders.get_fragment_shader()) {
+            Ok(shaders) => shaders,
+            Err(err) => {
+                error!("add render type spritesheet raw create shader set error: {}", err);
+                return Err(::utils::Error::Logged);
+            }
+        };
+
+        let program  = match factory.create_program(&shader_set) {
+            Ok(program) => program,
+            Err(err) => {
+                error!("add render type spritesheet raw create program error: {}", err);
+                return Err(::utils::Error::Logged);
+            }
+        };
+
+        let pso = match factory.create_pipeline_from_program(
+            &program,
+            ::gfx::Primitive::TriangleList,
+            rasterizer,
+            ::graphics::spritesheet::pipe::new()
+        ) {
+            Ok(pso) => pso,
+            Err(err) => {
+                error!("add render type spritesheet raw create pipeline error: {}", err);
+                return Err(::utils::Error::Logged);
+            }
+        };
+
+        let (vbuf, slice) = factory.create_vertex_buffer_with_slice(vertices, indices);
+        let data = ::graphics::spritesheet::pipe::Data {
+            vbuf: vbuf,
+            spritesheet: (spritesheet, factory.create_sampler_linear()),
+            texture_data: factory.create_constant_buffer(1),
+            projection_cb: factory.create_constant_buffer(1),
+            out_color: self.out_color.clone(),
+            out_depth: self.out_depth.clone(),
+        };
+
+        let id = self.spritesheet_bundles.len();
+        let mut bundles = match ::std::sync::Arc::get_mut(&mut self.spritesheet_bundles) {
+            Some(bundles) => bundles,
+            None => {
+                error!("add render type spritesheet raw get mut bundles was none");
+                return Err(::utils::Error::Logged);
+            }
+        };
+        bundles.push(::graphics::spritesheet::Bundle::new(slice, pso, data));
         Ok(::comps::RenderType {
             id: id,
             renderer_type: ::graphics::RendererType::Texture,
@@ -255,8 +334,6 @@ impl System {
                             tint: rd.get_tint(),
                         };
                         encoder.update_constant_buffer(&b.data.texture_data, &texture_data);
-
-                        encoder.update_texture(&b.data.texture, (tex.get_texture(rd.get_texture_index()[rd.get_texture_index_index()]).unwrap(), &b.data.texture.1));
                     }
 
                     b.encode(&mut encoder);

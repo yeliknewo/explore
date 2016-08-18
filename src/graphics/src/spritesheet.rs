@@ -7,13 +7,12 @@ pub fn make_shaders() -> Result<::Shaders, ::utils::Error> {
 gfx_defines! {
     vertex Vertex {
         pos: [f32; 3] = "a_Pos",
-        buf_pos: [f32; 2] = "a_BufPos",
         uv: [f32; 2] = "a_Uv",
     }
 
     constant TextureData {
         tint: [f32; 4] = "u_Tint",
-        tilesheet_step: [f32; 2] = "u_TilesheetStep",
+        tilesheet_rect: [f32; 4] = "u_TilesheetRect",
     }
 
     pipeline pipe {
@@ -31,10 +30,9 @@ gfx_defines! {
 }
 
 impl Vertex {
-    pub fn new(pos: [f32; 3], buf_pos: [f32; 2], uv: [f32; 2]) -> Vertex {
+    pub fn new(pos: [f32; 3], uv: [f32; 2]) -> Vertex {
         Vertex {
             pos: pos,
-            buf_pos: buf_pos,
             uv: uv,
         }
     }
@@ -69,21 +67,18 @@ pub struct Packet {
     vertices: Vec<Vertex>,
     indices: Vec<Index>,
     rasterizer: ::gfx::state::Rasterizer,
-    texture: Option<::gfx::handle::ShaderResourceView<::gfx_device_gl::Resources, [f32; 4]>>,
 }
 
 impl Packet {
     pub fn new(
         vertices: Vec<Vertex>,
         indices: Vec<Index>,
-        rasterizer: ::gfx::state::Rasterizer,
-        texture: ::gfx::handle::ShaderResourceView<::gfx_device_gl::Resources, [f32; 4]>
+        rasterizer: ::gfx::state::Rasterizer
     ) -> Packet {
         Packet {
             vertices: vertices,
             indices: indices,
             rasterizer: rasterizer,
-            texture: Some(texture),
         }
     }
 
@@ -97,9 +92,5 @@ impl Packet {
 
     pub fn get_rasterizer(&self) -> ::gfx::state::Rasterizer {
         self.rasterizer
-    }
-
-    pub fn get_texture(&mut self) -> ::gfx::handle::ShaderResourceView<::gfx_device_gl::Resources, [f32; 4]> {
-        self.texture.take().unwrap()
     }
 }

@@ -5,6 +5,7 @@ extern crate gfx_window_glutin;
 extern crate specs;
 extern crate nalgebra;
 extern crate time;
+extern crate find_folder;
 #[macro_use]
 extern crate log;
 extern crate env_logger;

@@ -11,6 +11,7 @@ gfx_window_glutin = "*"
 specs = "*"
 nalgebra = "*"
 time = "*"
+find_folder = "*"
 log = "*"
 env_logger = "*"
 
