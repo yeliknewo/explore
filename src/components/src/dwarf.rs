@@ -9,10 +9,10 @@ impl ::specs::Component for Component {
 }
 
 impl Component {
-    pub fn new() -> Component {
+    pub fn new(speed: ::math::Float) -> Component {
         Component {
             target_tile: ::math::Point2::zero(),
-            speed: 1.0,
+            speed: speed,
         }
     }
 

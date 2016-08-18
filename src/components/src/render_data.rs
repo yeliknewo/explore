@@ -3,6 +3,7 @@ pub struct Component {
     tint: [f32; 4],
     spritesheet_rect: [f32; 4],
     spritesheet_size: [f32; 2],
+    mirror: bool,
     dirty: bool,
     dirty_2: bool, // required because double buffering
 }
@@ -17,9 +18,15 @@ impl Component {
             tint: tint,
             spritesheet_rect: spritesheet_rect,
             spritesheet_size: spritesheet_size,
+            mirror: false,
             dirty: true,
             dirty_2: true,
         }
+    }
+
+    pub fn set_mirror(&mut self, mirror: bool) {
+        self.mirror = mirror;
+        self.set_dirty();
     }
 
     pub fn set_spritesheet_rect(&mut self, spritesheet_rect: [f32; 4]) {
@@ -30,6 +37,10 @@ impl Component {
     pub fn set_tint(&mut self, tint: [f32; 4]) {
         self.tint = tint;
         self.set_dirty();
+    }
+
+    pub fn get_mirror(&self) -> bool {
+        self.mirror
     }
 
     pub fn get_tint(&self) -> [f32; 4] {

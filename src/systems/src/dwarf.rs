@@ -40,10 +40,9 @@ impl ::specs::System<::utils::Delta> for System {
                         d.get_target_tile()
                     }
                 } else {
-                    d.get_target_tile().normalized()
+                    d.get_target_tile().normalized() * d.get_speed()
                 }
             };
-
 
             if normal.is_finite() {
                 l.walk(normal);

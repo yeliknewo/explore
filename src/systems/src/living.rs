@@ -22,13 +22,17 @@ impl ::specs::System<::utils::Delta> for System {
             match l.get_state() {
                 ::comps::living::State::Idle => (),
                 ::comps::living::State::Walking(dir) => {
-                    *p.get_mut_speed() = dir;
                     if l.is_state_new() {
                         rd.set_spritesheet_rect(l.get_next_walking().clone());
+                        let mirror = dir.get_x().is_sign_positive();
+                        if mirror != rd.get_mirror() {
+                            rd.set_mirror(mirror);
+                        }
                     }
+                    *p.get_mut_speed() = dir;
                 },
                 ::comps::living::State::Falling(speed) => {
-                    p.get_mut_speed().set_y(speed);
+                    *p.get_mut_speed().get_mut_y() = speed;
                     if l.is_state_new() {
                         rd.set_spritesheet_rect(l.get_next_falling().clone());
                     }

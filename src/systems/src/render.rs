@@ -351,6 +351,7 @@ impl System {
                             tint: rd.get_tint(),
                             spritesheet_rect: rd.get_spritesheet_rect(),
                             spritesheet_size: rd.get_spritesheet_size(),
+                            mirror: rd.get_mirror(),
                         };
                         encoder.update_constant_buffer(&b.data.texture_data, &texture_data);
                     }
@@ -386,6 +387,16 @@ impl System {
             bundle.data.out_depth = self.out_depth.clone();
         }
         for bundle in match ::std::sync::Arc::get_mut(&mut self.texture_bundles) {
+            Some(bundle) => bundle,
+            None => {
+                error!("set graphics data get mut texture bundles was none");
+                return Err(::utils::Error::Logged);
+            }
+        }  {
+            bundle.data.out_color = self.out_color.clone();
+            bundle.data.out_depth = self.out_depth.clone();
+        }
+        for bundle in match ::std::sync::Arc::get_mut(&mut self.spritesheet_bundles) {
             Some(bundle) => bundle,
             None => {
                 error!("set graphics data get mut texture bundles was none");

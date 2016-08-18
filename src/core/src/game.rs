@@ -148,7 +148,7 @@ impl Game {
                     ::art::spritesheet::p1::HURT
                 )
             ))
-            .with(::comps::Dwarf::new())
+            .with(::comps::Dwarf::new(5.0))
             .build();
 
         planner.add_system(

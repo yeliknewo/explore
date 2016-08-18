@@ -107,12 +107,12 @@ impl Point2 {
         self.y
     }
 
-    pub fn set_x(&mut self, value: Float) {
-        self.x = value;
+    pub fn get_mut_x(&mut self) -> &mut Float {
+        &mut self.x
     }
 
-    pub fn set_y(&mut self, value: Float) {
-        self.y = value;
+    pub fn get_mut_y(&mut self) -> &mut Float {
+        &mut self.y
     }
 
     pub fn normalized(&self) -> Point2 {
@@ -153,6 +153,22 @@ impl std::ops::Sub<Point2> for Point2 {
 
     fn sub(self, other: Point2) -> Point2 {
         Point2::new(self.get_x() - other.get_x(), self.get_y() - other.get_y())
+    }
+}
+
+impl std::ops::Mul<Point2> for Point2 {
+    type Output = Point2;
+
+    fn mul(self, other: Point2) -> Point2 {
+        Point2::new(self.get_x() * other.get_x(), self.get_y() * other.get_y())
+    }
+}
+
+impl std::ops::Mul<Float> for Point2 {
+    type Output = Point2;
+
+    fn mul(self, other: Float) -> Point2 {
+        Point2::new(self.get_x() * other, self.get_y() * other)
     }
 }
 
