@@ -30,7 +30,7 @@ impl Game {
         screen_resolution: ::math::Point2,
         ortho_helper: ::math::OrthographicHelper
     ) -> Result<Game, ::utils::Error> {
-        let default_tint = [0.5, 0.5, 0.5, 1.0];
+        let default_tint = [0.3, 0.3, 0.3, 1.0];
 
         let mut planner = {
             let mut w = ::specs::World::new();
@@ -43,9 +43,8 @@ impl Game {
             w.register::<::comps::Dwarf>();
             w.register::<::comps::Living>();
             w.register::<::comps::Physical>();
-            w.register::<::comps::TextureStorage>();
 
-            ::specs::Planner::<::utils::Delta>::new(w, 4)
+            ::specs::Planner::<::utils::Delta>::new(w, 8)
         };
 
         let mut renderer = try!(::sys::render::System::new(match game_event_hub.render_channel.take() {
@@ -66,10 +65,6 @@ impl Game {
             ))
             .build();
 
-        // let textures = ::art::make_texture_storage_vec(factory);
-
-
-
         let packet = ::art::spritesheet::make_square_render();
 
         let assets_folder = match ::find_folder::Search::ParentsThenKids(3, 3).for_folder("assets") {
@@ -80,50 +75,41 @@ impl Game {
             }
         };
 
-        let tiles_render = try!(
-            renderer.add_render_type_spritesheet(
-                factory,
-                &packet,
-                try!(
-                    ::graphics::texture::load_texture(
-                        factory,
-                        assets_folder.join(
-                            "Tiles/tiles_spritesheet.png"
-                        )
+        let tiles_render = {
+            let texture = try!(
+                ::graphics::texture::load_texture(
+                    factory,
+                    assets_folder.join(
+                        "Tiles/tiles_spritesheet.png"
                     )
                 )
-            )
-        );
-
-        let p1_render = try!(
-            renderer.add_render_type_spritesheet(
-                factory,
-                &packet,
-                try!(
-                    ::graphics::texture::load_texture(
-                        factory,
-                        assets_folder.join(
-                            "Player/p1_spritesheet.png"
-                        )
-                    )
+            );
+            try!(
+                renderer.add_render_type_spritesheet(
+                    factory,
+                    &packet,
+                    texture
                 )
             )
-        );
+        };
 
-        // let grass_render = {
-        //     let packet = ::art::spritesheet::make_square_render(textures[::art::GRASS_MID].clone());
-        //     try!(renderer.add_render_type_texture(factory, packet))
-        // };
-        //
-        // let grass_center_render = {
-        //     let packet = ::art::square::make_square_render(textures[::art::GRASS_CENTER].clone());
-        //     try!(renderer.add_render_type_texture(factory, packet))
-        // };
-        //
-        // let player_render = {
-        //     let packet = ::art::square::make_square_render(textures[::art::P1_STAND].clone());
-        //     try!(renderer.add_render_type_texture(factory, packet))
-        // };
+        let p1_render = {
+            let texture = try!(
+                ::graphics::texture::load_texture(
+                    factory,
+                    assets_folder.join(
+                        "Player/p1_spritesheet.png"
+                    )
+                )
+            );
+            try!(
+                renderer.add_render_type_spritesheet(
+                    factory,
+                    &packet,
+                    texture
+                )
+            )
+        };
 
         for y in -10..11i32 {
             for x in -10..11i32 {
@@ -136,13 +122,7 @@ impl Game {
                         ),
                         ::nalgebra::Vector3::new(1.0, 1.0, 1.0)
                     ))
-                    // .with(::comps::RenderData::new_texture([
-                    //     (x + 10) as f32 / 20.0,
-                    //     (y + 10) as f32 / 20.0,
-                    //     ((x + 10) as f32 / 20.0 + (y + 10) as f32 / 20.0) / 2.0,
-                    //     1.0
-                    // ]))
-                    .with(::comps::RenderData::new(default_tint))
+                    .with(::comps::RenderData::new(default_tint, ::art::spritesheet::tiles::GRASS_MID, ::art::spritesheet::tiles::SIZE))
                     .with(::comps::Clickable::new(::math::Rect::new_from_coords(0.0, 0.0, 1.0, 1.0)))
                     .build();
             }
@@ -157,34 +137,11 @@ impl Game {
                 ),
                 ::nalgebra::Vector3::new(1.0, 1.0, 1.0)
             ))
-            .with(::comps::RenderData::new(default_tint))
+            .with(::comps::RenderData::new(default_tint, ::art::spritesheet::p1::STAND, ::art::spritesheet::p1::SIZE))
             .with(::comps::Physical::new_zero())
-            .with(::comps::Living::new(
-                vec!(
-                    ::art::P1_WALK01,
-                    ::art::P1_WALK02,
-                    ::art::P1_WALK03,
-                    ::art::P1_WALK04,
-                    ::art::P1_WALK05,
-                    ::art::P1_WALK06,
-                    ::art::P1_WALK07,
-                    ::art::P1_WALK08,
-                    ::art::P1_WALK09,
-                    ::art::P1_WALK10,
-                    ::art::P1_WALK11
-                ),
-                vec!(
-                    ::art::P1_HURT
-                )
-            ))
+            .with(::comps::Living::new())
             .with(::comps::Dwarf::new())
             .build();
-
-        planner.mut_world().create_now()
-            .with(::comps::TextureStorage::new(textures))
-            .build();
-
-        planner.add_system(renderer, "renderer", 10);
 
         planner.add_system(
             ::sys::control::System::new(
@@ -205,9 +162,9 @@ impl Game {
             30);
 
         planner.add_system(
-            ::sys::physical::System::new(),
-            "physical",
-            15
+            ::sys::dwarf::System::new(),
+            "dwarf",
+            25
         );
 
         planner.add_system(
@@ -217,10 +174,12 @@ impl Game {
         );
 
         planner.add_system(
-            ::sys::dwarf::System::new(),
-            "dwarf",
-            25
+            ::sys::physical::System::new(),
+            "physical",
+            15
         );
+
+        planner.add_system(renderer, "renderer", 10);
 
         Ok(Game {
             planner: planner,
@@ -237,6 +196,7 @@ impl Game {
             fps_counter: ::utils::fps_counter::FpsCounter::new(),
         })
     }
+
 
     pub fn frame(&mut self) -> bool {
         let new_time = ::time::precise_time_ns();

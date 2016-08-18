@@ -2,8 +2,6 @@
 pub struct Component {
     state: State,
     last_state: State,
-    walking_index: Vec<usize>,
-    falling_index: Vec<usize>,
 }
 
 impl ::specs::Component for Component {
@@ -11,12 +9,10 @@ impl ::specs::Component for Component {
 }
 
 impl Component {
-    pub fn new(walking_index: Vec<usize>, falling_index: Vec<usize>) -> Component {
+    pub fn new() -> Component {
         Component {
             state: State::Idle,
             last_state: State::Idle,
-            walking_index: walking_index,
-            falling_index: falling_index,
         }
     }
 
@@ -32,14 +28,6 @@ impl Component {
 
     pub fn get_state(&self) -> State {
         self.state.clone()
-    }
-
-    pub fn get_walking_index(&self) -> &Vec<usize> {
-        &self.walking_index
-    }
-
-    pub fn get_falling_index(&self) -> &Vec<usize> {
-        &self.falling_index
     }
 
     pub fn is_state_new(&self) -> bool {

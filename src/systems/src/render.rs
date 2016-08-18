@@ -63,8 +63,7 @@ impl System {
     pub fn add_render_type_color(&mut self,
         factory: &mut ::gfx_device_gl::Factory,
         color_packet: ::graphics::color::Packet
-    ) -> Result<::comps::RenderType, ::utils::Error>
-    {
+    ) -> Result<::comps::RenderType, ::utils::Error> {
         self.add_render_type_color_raw(
             factory,
             color_packet.get_vertices(),
@@ -78,8 +77,7 @@ impl System {
         vertices: &[::graphics::color::Vertex],
         indices: &[::graphics::color::Index],
         rasterizer: ::gfx::state::Rasterizer
-    ) -> Result<::comps::RenderType, ::utils::Error>
-    {
+    ) -> Result<::comps::RenderType, ::utils::Error> {
         let shader_set = match factory.create_shader_set(self.color_shaders.get_vertex_shader(), self.color_shaders.get_fragment_shader()) {
             Ok(shaders) => shaders,
             Err(err) => {
@@ -128,8 +126,7 @@ impl System {
     pub fn add_render_type_texture(&mut self,
         factory: &mut ::gfx_device_gl::Factory,
         mut texture_packet: ::graphics::texture::Packet
-    ) -> Result<::comps::RenderType, ::utils::Error>
-    {
+    ) -> Result<::comps::RenderType, ::utils::Error> {
         let texture = texture_packet.get_texture();
 
         self.add_render_type_texture_raw(
@@ -147,8 +144,7 @@ impl System {
         indices: &[::graphics::texture::Index],
         rasterizer: ::gfx::state::Rasterizer,
         texture_view: ::gfx::handle::ShaderResourceView<::gfx_device_gl::Resources, [f32; 4]>
-    ) -> Result<::comps::RenderType, ::utils::Error>
-    {
+    ) -> Result<::comps::RenderType, ::utils::Error> {
         let shader_set = match factory.create_shader_set(self.texture_shaders.get_vertex_shader(), self.texture_shaders.get_fragment_shader()) {
             Ok(shaders) => shaders,
             Err(err) => {
@@ -267,15 +263,15 @@ impl System {
         bundles.push(::graphics::spritesheet::Bundle::new(slice, pso, data));
         Ok(::comps::RenderType {
             id: id,
-            renderer_type: ::graphics::RendererType::Texture,
+            renderer_type: ::graphics::RendererType::Spritesheet,
         })
     }
 
     fn render(&mut self, arg: &::specs::RunArg, mut encoder: ::gfx::Encoder<::gfx_device_gl::Resources, ::gfx_device_gl::CommandBuffer>) -> Result<(), ::utils::Error> {
         use specs::Join;
 
-        let (textures, draw, transform, mut camera, mut render_data) = arg.fetch(|w| {
-            (w.read::<::comps::TextureStorage>(), w.read::<::comps::RenderType>(), w.read::<::comps::Transform>(), w.write::<::comps::Camera>(), w.write::<::comps::RenderData>())
+        let (draw, transform, mut camera, mut render_data) = arg.fetch(|w| {
+            (w.read::<::comps::RenderType>(), w.read::<::comps::Transform>(), w.write::<::comps::Camera>(), w.write::<::comps::RenderData>())
         });
 
         encoder.clear(&self.out_color, [0.0, 0.0, 0.0, 1.0]);
@@ -301,7 +297,7 @@ impl System {
             (camera.get_view(), camera.get_proj(), camera.take_dirty())
         };
 
-        for (tex, d, t, rd) in (&textures, &draw, &transform, &mut render_data).iter() {
+        for (d, t, mut rd) in (&draw, &transform, &mut render_data).iter() {
             match d.renderer_type {
                 ::graphics::RendererType::Color => {
                     let b = &self.color_bundles[d.id];
@@ -338,6 +334,29 @@ impl System {
 
                     b.encode(&mut encoder);
                 },
+                ::graphics::RendererType::Spritesheet => {
+                    let b = &self.spritesheet_bundles[d.id];
+
+                    if dirty_cam {
+                        let projection_data = ::graphics::ProjectionData {
+                            model: t.get_model(),
+                            view: view,
+                            proj: proj,
+                        };
+                        encoder.update_constant_buffer(&b.data.projection_cb, &projection_data);
+                    }
+
+                    if rd.take_dirty() {
+                        let texture_data = ::graphics::spritesheet::TextureData {
+                            tint: rd.get_tint(),
+                            spritesheet_rect: rd.get_spritesheet_rect(),
+                            spritesheet_size: rd.get_spritesheet_size(),
+                        };
+                        encoder.update_constant_buffer(&b.data.texture_data, &texture_data);
+                    }
+
+                    b.encode(&mut encoder);
+                }
             }
         }
 

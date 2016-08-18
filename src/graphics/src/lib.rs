@@ -97,6 +97,7 @@ impl Shaders {
 pub enum RendererType {
     Color,
     Texture,
+    Spritesheet,
 }
 
 pub fn build_graphics(width: u32, height: u32) -> (

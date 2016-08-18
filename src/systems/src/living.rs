@@ -24,13 +24,13 @@ impl ::specs::System<::utils::Delta> for System {
                 ::comps::living::State::Walking(dir) => {
                     *p.get_mut_speed() = dir;
                     if l.is_state_new() {
-                        rd.set_texture_index(l.get_walking_index().clone());
+                        // rd.set_texture_index(l.get_walking_index().clone());
                     }
                 },
                 ::comps::living::State::Falling(speed) => {
                     p.get_mut_speed().set_y(speed);
                     if l.is_state_new() {
-                        rd.set_texture_index(l.get_falling_index().clone());
+                        // rd.set_texture_index(l.get_falling_index().clone());
                     }
                 },
             }

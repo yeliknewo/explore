@@ -1,8 +1,8 @@
 #[derive(Debug)]
 pub struct Component {
     tint: [f32; 4],
-    texture_index: Vec<usize>,
-    texture_index_index: usize,
+    spritesheet_rect: [f32; 4],
+    spritesheet_size: [f32; 2],
     dirty: bool,
     dirty_2: bool, // required because double buffering
 }
@@ -12,14 +12,19 @@ impl ::specs::Component for Component {
 }
 
 impl Component {
-    pub fn new(tint: [f32; 4]) -> Component {
+    pub fn new(tint: [f32; 4], spritesheet_rect: [f32; 4], spritesheet_size: [f32; 2]) -> Component {
         Component {
             tint: tint,
-            texture_index: vec!(),
-            texture_index_index: 0,
+            spritesheet_rect: spritesheet_rect,
+            spritesheet_size: spritesheet_size,
             dirty: true,
             dirty_2: true,
         }
+    }
+
+    pub fn set_spritesheet_rect(&mut self, spritesheet_rect: [f32; 4]) {
+        self.spritesheet_rect = spritesheet_rect;
+        self.set_dirty();
     }
 
     pub fn set_tint(&mut self, tint: [f32; 4]) {
@@ -27,22 +32,16 @@ impl Component {
         self.set_dirty();
     }
 
-    pub fn set_texture_index(&mut self, texture_index: Vec<usize>) {
-        self.texture_index = texture_index;
-        self.set_dirty();
-    }
-
-    pub fn get_texture_index_index(&mut self) -> usize {
-        self.texture_index_index += 1;
-        self.texture_index_index - 1
-    }
-
     pub fn get_tint(&self) -> [f32; 4] {
         self.tint.clone()
     }
 
-    pub fn get_texture_index(&self) -> &Vec<usize> {
-        &self.texture_index
+    pub fn get_spritesheet_rect(&self) -> [f32; 4] {
+        self.spritesheet_rect.clone()
+    }
+
+    pub fn get_spritesheet_size(&self) -> [f32; 2] {
+        self.spritesheet_size.clone()
     }
 
     fn set_dirty(&mut self) {
@@ -51,11 +50,11 @@ impl Component {
     }
 
     pub fn take_dirty(&mut self) -> bool {
-        let temp = self.dirty | self.dirty_2;
         self.dirty = false;
         if self.dirty {
             self.dirty_2 = false;
+            return true;
         }
-        temp
+        return self.dirty_2;
     }
 }

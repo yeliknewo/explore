@@ -9,6 +9,7 @@ pub struct Component {
     aspect_ratio: ::utils::Coord,
     is_main: bool,
     dirty: bool,
+    dirty_2: bool,
 }
 
 impl Component {
@@ -29,6 +30,7 @@ impl Component {
             aspect_ratio: aspect_ratio,
             is_main: is_main,
             dirty: true,
+            dirty_2: true,
         }
     }
 
@@ -58,7 +60,7 @@ impl Component {
     pub fn set_offset(&mut self, offset: ::math::Point2) {
         self.set_eye(::nalgebra::Point3::new(offset.get_x(), offset.get_y(), 2.0));
         self.set_target(::nalgebra::Point3::new(offset.get_x(), offset.get_y(), 0.0));
-        self.dirty = true;
+        self.set_dirty();
     }
 
     fn set_eye(&mut self, eye: ::nalgebra::Point3<::utils::Coord>) {
@@ -102,10 +104,18 @@ impl Component {
         world_point
     }
 
+    fn set_dirty(&mut self) {
+        self.dirty = true;
+        self.dirty_2 = true;
+    }
+
     pub fn take_dirty(&mut self) -> bool {
-        let temp = self.dirty;
         self.dirty = false;
-        temp
+        if self.dirty {
+            self.dirty_2 = false;
+            return true;
+        }
+        return self.dirty_2;
     }
 }
 

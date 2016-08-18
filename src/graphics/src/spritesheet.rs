@@ -1,7 +1,7 @@
 pub type Index = u32;
 
 pub fn make_shaders() -> Result<::Shaders, ::utils::Error> {
-    ::Shaders::new("texture_150_v.glsl", "texture_150_f.glsl")
+    ::Shaders::new("spritesheet_150_v.glsl", "spritesheet_150_f.glsl")
 }
 
 gfx_defines! {
@@ -12,7 +12,8 @@ gfx_defines! {
 
     constant TextureData {
         tint: [f32; 4] = "u_Tint",
-        tilesheet_rect: [f32; 4] = "u_TilesheetRect",
+        spritesheet_rect: [f32; 4] = "u_SpritesheetRect",
+        spritesheet_size: [f32; 2] = "u_SpritesheetSize",
     }
 
     pipeline pipe {
