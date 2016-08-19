@@ -33,7 +33,7 @@ impl Component {
     }
 
     fn set_state_pair(&mut self, new_state_pair: (State, StateData)) {
-        if self.last_state_pair != new_state_pair {
+        if self.last_state_pair.0 != new_state_pair.0 {
             self.frame_count = 0;
         }
         self.last_state_pair = self.state_pair.clone();

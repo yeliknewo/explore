@@ -14,8 +14,8 @@ impl ::specs::System<::utils::Delta> for System {
     fn run(&mut self, arg: ::specs::RunArg, time: ::utils::Delta) {
         use specs::Join;
 
-        let (physical, transform, clickable, mut dwarf, mut living) = arg.fetch(|w|
-            (w.read::<::comps::Physical>(), w.read::<::comps::Transform>(), w.read::<::comps::Clickable>(), w.write::<::comps::Dwarf>(), w.write::<::comps::Living>())
+        let (physical, transform, clickable, dwarf, mut living) = arg.fetch(|w|
+            (w.read::<::comps::Physical>(), w.read::<::comps::Transform>(), w.read::<::comps::Clickable>(), w.read::<::comps::Dwarf>(), w.write::<::comps::Living>())
         );
 
         let mut target_opt = None;
@@ -26,29 +26,16 @@ impl ::specs::System<::utils::Delta> for System {
             }
         }
 
-        for (mut d, mut l, t, p) in (&mut dwarf, &mut living, &transform, &physical).iter() {
+        for (d, mut l, t, p) in (&dwarf, &mut living, &transform, &physical).iter() {
             if let Some(target) = target_opt.as_ref() {
-                *d.get_mut_target_tile_opt() = Some(target.clone() - t.get_pos()); //unwraps are ok because of this
+                let offset_from_target = target.clone() - t.get_pos();
 
-                if d.get_target_tile().unwrap().length() >= p.get_speed_break().length() {
-                    let normal = {
-                        let length = d.get_target_tile().unwrap().length();
-                        if length < d.get_speed() * time {
-                            l.walk_to(d.get_target_tile().unwrap().clone());
-                            l.idle();
-                            continue;
-                        } else {
-                            d.get_target_tile().unwrap().normalized() * d.get_speed()
-                        }
-                    };
-
-                    if normal.is_finite() {
-                        l.walk(normal);
-                    } else {
-                        debug!("non finite dwarf target tile: {}", normal);
-                    }
-                } else {
+                if offset_from_target.length() < p.get_speed_break().length() {
                     l.idle();
+                } else if offset_from_target.length() < d.get_speed() * time {
+                    l.walk_to(target.clone());
+                } else {
+                    l.walk(offset_from_target.normalized() * d.get_speed());
                 }
             } else {
                 l.idle();

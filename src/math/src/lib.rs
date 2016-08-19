@@ -9,15 +9,13 @@ pub mod ortho_helper;
 
 pub use self::ortho_helper::OrthographicHelper;
 
-pub type Float = f32;
-
 #[derive(Debug, Clone)]
 pub struct Rect {
     corners: LineSeg,
 }
 
 impl Rect {
-    pub fn new_from_coords(x0: Float, y0: Float, x1: Float, y1: Float) -> Rect {
+    pub fn new_from_coords(x0: ::utils::Coord, y0: ::utils::Coord, x1: ::utils::Coord, y1: ::utils::Coord) -> Rect {
         Rect::new_from_points(Point2::new(x0, y0), Point2::new(x1, y1))
     }
 
@@ -61,7 +59,7 @@ pub struct LineSeg {
 }
 
 impl LineSeg {
-    pub fn new_from_coords(x0: Float, y0: Float, x1: Float, y1: Float) -> LineSeg {
+    pub fn new_from_coords(x0: ::utils::Coord, y0: ::utils::Coord, x1: ::utils::Coord, y1: ::utils::Coord) -> LineSeg {
         LineSeg::new(Point2::new(x0, y0), Point2::new(x1, y1))
     }
 
@@ -83,12 +81,12 @@ impl LineSeg {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Point2 {
-    x: Float,
-    y: Float,
+    x: ::utils::Coord,
+    y: ::utils::Coord,
 }
 
 impl Point2 {
-    pub fn new(x: Float, y: Float) -> Point2 {
+    pub fn new(x: ::utils::Coord, y: ::utils::Coord) -> Point2 {
         Point2 {
             x: x,
             y: y,
@@ -99,19 +97,19 @@ impl Point2 {
         Point2::new(0.0, 0.0)
     }
 
-    pub fn get_x(&self) -> Float {
+    pub fn get_x(&self) -> ::utils::Coord {
         self.x
     }
 
-    pub fn get_y(&self) -> Float {
+    pub fn get_y(&self) -> ::utils::Coord {
         self.y
     }
 
-    pub fn get_mut_x(&mut self) -> &mut Float {
+    pub fn get_mut_x(&mut self) -> &mut ::utils::Coord {
         &mut self.x
     }
 
-    pub fn get_mut_y(&mut self) -> &mut Float {
+    pub fn get_mut_y(&mut self) -> &mut ::utils::Coord {
         &mut self.y
     }
 
@@ -119,7 +117,7 @@ impl Point2 {
         self.clone() / self.length()
     }
 
-    pub fn length(&self) -> Float {
+    pub fn length(&self) -> ::utils::Coord {
         (self.get_x().powi(2) + self.get_y().powi(2)).sqrt()
     }
 
@@ -164,18 +162,18 @@ impl std::ops::Mul<Point2> for Point2 {
     }
 }
 
-impl std::ops::Mul<Float> for Point2 {
+impl std::ops::Mul<::utils::Coord> for Point2 {
     type Output = Point2;
 
-    fn mul(self, other: Float) -> Point2 {
+    fn mul(self, other: ::utils::Coord) -> Point2 {
         Point2::new(self.get_x() * other, self.get_y() * other)
     }
 }
 
-impl std::ops::Div<Float> for Point2 {
+impl std::ops::Div<::utils::Coord> for Point2 {
     type Output = Point2;
 
-    fn div(self, other: Float) -> Point2 {
+    fn div(self, other: ::utils::Coord) -> Point2 {
         Point2::new(self.get_x() / other, self.get_y() / other)
     }
 }

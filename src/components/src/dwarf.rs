@@ -1,7 +1,7 @@
 #[derive(Debug)]
 pub struct Component {
     target_tile: Option<::math::Point2>,
-    speed: ::math::Float,
+    speed: ::utils::Coord,
 }
 
 impl ::specs::Component for Component {
@@ -9,7 +9,7 @@ impl ::specs::Component for Component {
 }
 
 impl Component {
-    pub fn new(speed: ::math::Float) -> Component {
+    pub fn new(speed: ::utils::Coord) -> Component {
         Component {
             target_tile: None,
             speed: speed,
@@ -20,7 +20,7 @@ impl Component {
         self.target_tile.as_ref()
     }
 
-    pub fn get_speed(&self) -> ::math::Float {
+    pub fn get_speed(&self) -> ::utils::Coord {
         self.speed
     }
 

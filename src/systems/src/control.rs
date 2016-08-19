@@ -51,7 +51,7 @@ impl System {
         mouse_location: ::math::Point2,
         screen_resolution: ::math::Point2,
         ortho_helper: ::math::OrthographicHelper,
-        default_tint: [::utils::Coord; 4]
+        default_tint: [f32; 4]
     ) -> System
     {
         System {
@@ -177,7 +177,7 @@ impl ::specs::System<::utils::Delta> for System {
                     },
                 }
                 for &(width, height) in &self.resize {
-                    self.ortho_helper.set_aspect_ratio(width as ::utils::Coord / height as ::utils::Coord);
+                    self.ortho_helper.set_aspect_ratio(width as ::utils::GfxCoord / height as ::utils::GfxCoord);
                     c.set_proj(&self.ortho_helper);
                     self.screen_resolution = ::math::Point2::new(width as ::utils::Coord, height as ::utils::Coord);
                 }

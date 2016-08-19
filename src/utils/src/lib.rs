@@ -4,8 +4,9 @@ extern crate env_logger;
 
 pub mod fps_counter;
 
-pub type Delta = f32;
-pub type Coord = f32;
+pub type Delta = f64;
+pub type Coord = f64;
+pub type GfxCoord = f32;
 
 #[derive(Debug)]
 pub enum Error {

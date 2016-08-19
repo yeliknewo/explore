@@ -19,6 +19,11 @@ impl ::specs::System<::utils::Delta> for System {
         );
 
         for (mut t, mut p) in (&mut transform, &mut physical).iter() {
+            if let Some(move_to) = p.get_move_to() {
+                t.set_position(move_to);
+                continue;
+            }
+
             if p.get_speed().is_zero() {
                 continue;
             }
@@ -26,11 +31,6 @@ impl ::specs::System<::utils::Delta> for System {
             let friction = p.get_friction();
 
             *p.get_mut_speed() *= friction;
-
-            if let Some(move_to) = p.get_move_to() {
-                t.set_position(move_to);
-                continue;
-            }
 
             let mut speed = p.get_speed();
 

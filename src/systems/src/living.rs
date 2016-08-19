@@ -21,18 +21,18 @@ impl ::specs::System<::utils::Delta> for System {
         for (mut p, mut rd, mut l) in (&mut physical, &mut render_data, &mut living).iter() {
             match l.get_state_pair() {
                 &(::comps::living::State::Idle, ::comps::living::StateData::Idle) => {
-
+                    *p.get_mut_speed() = ::math::Point2::zero();
                 },
                 &(::comps::living::State::Walking, ::comps::living::StateData::Walking(ref dir)) => {
                     let mirror = dir.get_x().is_sign_positive();
-                    if mirror != rd.get_mirror() {
+                    if mirror != rd.get_mirror() && dir.get_x().abs() > 0.1 {
                         rd.set_mirror(mirror);
                     }
                     *p.get_mut_speed() = dir.clone();
                 },
                 &(::comps::living::State::Walking, ::comps::living::StateData::MoveTo(ref location)) => {
                     let mirror = location.get_x().is_sign_positive();
-                    if mirror != rd.get_mirror() {
+                    if mirror != rd.get_mirror() && location.get_x().abs() > 0.1 {
                         rd.set_mirror(mirror);
                     }
                     *p.get_mut_speed() = ::math::Point2::zero();

@@ -29,7 +29,7 @@ pub fn start() -> Result<(), ::utils::Error> {
 
     let zfar = 10.0;
 
-    let aspect_ratio = width as ::utils::Coord / height as ::utils::Coord;
+    let aspect_ratio = width as ::utils::GfxCoord / height as ::utils::GfxCoord;
 
     let ortho_helper = ::math::OrthographicHelper::new(aspect_ratio, fov, znear, zfar);
 
@@ -48,8 +48,8 @@ pub fn start() -> Result<(), ::utils::Error> {
             game_event,
             ::math::Point2::new(0.0, 0.0),
             ::math::Point2::new(
-                out_color.get_dimensions().0 as f32,
-                out_color.get_dimensions().1 as f32
+                out_color.get_dimensions().0 as ::utils::Coord,
+                out_color.get_dimensions().1 as ::utils::Coord
             ),
             ortho_helper
         )
