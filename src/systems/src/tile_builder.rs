@@ -5,7 +5,7 @@ pub type Channel = (
 
 #[derive(Debug)]
 pub enum SendEvent {
-    NewTile(::math::Point2I, Vec<::math::Point2I>, ::comps::tile::PathType),
+    NewTile(::math::Point2I, Vec<::math::Point2I>, ::comps::tile::PathType, [f32; 4]),
 }
 
 #[derive(Debug)]
@@ -87,15 +87,24 @@ impl ::specs::System<::utils::Delta> for System {
                     let checking: ::math::Point2I = conv + ::math::Point2I::new(x, y);
 
                     if tile_map.get_tile(&checking).is_none() {
-                        match self.channel.0.send(SendEvent::NewTile(
-                            checking.clone(),
-                            self.get_connections(&checking),
-                            ::comps::tile::PathType::Walkable
-                        )) {
-                            Ok(()) => (),
-                            Err(err) => {
-                                error!("error while sending new tile: {}", err);
-                                continue;
+                        if checking.get_y() < 10 {
+                            match self.channel.0.send(SendEvent::NewTile(
+                                checking.clone(),
+                                self.get_connections(&checking),
+                                ::comps::tile::PathType::Walkable,
+                                {
+                                    if checking.get_y() < 9 {
+                                        ::art::spritesheet::tiles::GRASS_CENTER
+                                    } else {
+                                        ::art::spritesheet::tiles::GRASS_MID
+                                    }
+                                }
+                            )) {
+                                Ok(()) => (),
+                                Err(err) => {
+                                    error!("error while sending new tile: {}", err);
+                                    continue;
+                                }
                             }
                         }
                     }
@@ -103,5 +112,4 @@ impl ::specs::System<::utils::Delta> for System {
             }
         }
     }
-
 }

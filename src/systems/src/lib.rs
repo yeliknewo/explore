@@ -11,6 +11,7 @@ extern crate graphics;
 extern crate utils;
 extern crate components as comps;
 extern crate math;
+extern crate art;
 
 pub mod control;
 pub mod dwarf;

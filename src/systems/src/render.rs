@@ -119,7 +119,7 @@ impl System {
         bundles.push(::graphics::color::Bundle::new(slice, pso, data));
         Ok(::comps::RenderType {
             id: id,
-            renderer_type: ::graphics::RendererType::Color,
+            // renderer_type: ::graphics::RendererType::Color,
         })
     }
 
@@ -193,7 +193,7 @@ impl System {
         bundles.push(::graphics::texture::Bundle::new(slice, pso, data));
         Ok(::comps::RenderType {
             id: id,
-            renderer_type: ::graphics::RendererType::Texture,
+            // renderer_type: ::graphics::RendererType::Texture,
         })
     }
 
@@ -263,7 +263,7 @@ impl System {
         bundles.push(::graphics::spritesheet::Bundle::new(slice, pso, data));
         Ok(::comps::RenderType {
             id: id,
-            renderer_type: ::graphics::RendererType::Spritesheet,
+            // renderer_type: ::graphics::RendererType::Spritesheet,
         })
     }
 
@@ -274,7 +274,7 @@ impl System {
             (w.read::<::comps::RenderType>(), w.read::<::comps::Transform>(), w.write::<::comps::Camera>(), w.write::<::comps::RenderData>())
         });
 
-        encoder.clear(&self.out_color, [0.0, 0.0, 0.0, 1.0]);
+        encoder.clear(&self.out_color, [1.0, 1.0, 1.0, 1.0]);
         encoder.clear_depth(&self.out_depth, 1.0);
 
         let (view, proj, dirty_cam) = {
@@ -297,69 +297,49 @@ impl System {
             (camera.get_view(), camera.get_proj(), camera.take_dirty())
         };
 
+        let mut data = vec!();
+
         for (d, t, mut rd) in (&draw, &transform, &mut render_data).iter() {
-            match d.renderer_type {
-                ::graphics::RendererType::Color => {
-                    let b = &self.color_bundles[d.id];
+            let mut projection_data = None;
 
-                    if dirty_cam {
-                        let projection_data = ::graphics::ProjectionData {
-                            model: t.get_model(),
-                            view: view,
-                            proj: proj,
-                        };
-                        encoder.update_constant_buffer(&b.data.projection_cb, &projection_data);
-                    }
-
-                    b.encode(&mut encoder);
-                }
-                ::graphics::RendererType::Texture => {
-                    let b = &self.texture_bundles[d.id];
-
-                    if dirty_cam {
-                        let projection_data = ::graphics::ProjectionData {
-                            model: t.get_model(),
-                            view: view,
-                            proj: proj,
-                        };
-                        encoder.update_constant_buffer(&b.data.projection_cb, &projection_data);
-                    }
-
-                    if rd.take_dirty() {
-                        let texture_data = ::graphics::texture::TextureData {
-                            tint: rd.get_tint(),
-                        };
-                        encoder.update_constant_buffer(&b.data.texture_data, &texture_data);
-                    }
-
-                    b.encode(&mut encoder);
-                },
-                ::graphics::RendererType::Spritesheet => {
-                    let b = &self.spritesheet_bundles[d.id];
-
-                    if dirty_cam {
-                        let projection_data = ::graphics::ProjectionData {
-                            model: t.get_model(),
-                            view: view,
-                            proj: proj,
-                        };
-                        encoder.update_constant_buffer(&b.data.projection_cb, &projection_data);
-                    }
-
-                    if rd.take_dirty() {
-                        let texture_data = ::graphics::spritesheet::TextureData {
-                            tint: rd.get_tint(),
-                            spritesheet_rect: rd.get_spritesheet_rect(),
-                            spritesheet_size: rd.get_spritesheet_size(),
-                            mirror: rd.get_mirror(),
-                        };
-                        encoder.update_constant_buffer(&b.data.texture_data, &texture_data);
-                    }
-
-                    b.encode(&mut encoder);
-                }
+            if dirty_cam {
+                projection_data = Some(::graphics::ProjectionData {
+                    model: t.get_model(),
+                    view: view,
+                    proj: proj,
+                });
             }
+
+            let mut texture_data = None;
+
+            if rd.take_dirty() {
+                texture_data = Some(::graphics::spritesheet::TextureData {
+                    tint: rd.get_tint(),
+                    spritesheet_rect: rd.get_spritesheet_rect(),
+                    spritesheet_size: rd.get_spritesheet_size(),
+                    mirror: rd.get_mirror(),
+                });
+            }
+
+            data.push((d.id, rd.get_layer(), texture_data, projection_data));
         }
+
+        data.sort_by_key(|k| k.1);
+
+        for data in data {
+            let b = &self.spritesheet_bundles[data.0];
+
+            if let Some(texture_data) = data.2 {
+                encoder.update_constant_buffer(&b.data.texture_data, &texture_data);
+            }
+
+            if let Some(projection_data) = data.3 {
+                encoder.update_constant_buffer(&b.data.projection_cb, &projection_data);
+            }
+
+            b.encode(&mut encoder);
+        }
+
 
         match self.channel.0.send(SendEvent::Encoder(encoder)) {
             Ok(()) => (),

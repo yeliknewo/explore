@@ -1,6 +1,7 @@
 #[derive(Debug)]
 pub struct Component {
     tint: [f32; 4],
+    layer: u8,
     spritesheet_rect: [f32; 4],
     spritesheet_size: [f32; 2],
     mirror: bool,
@@ -13,15 +14,21 @@ impl ::specs::Component for Component {
 }
 
 impl Component {
-    pub fn new(tint: [f32; 4], spritesheet_rect: [f32; 4], spritesheet_size: [f32; 2]) -> Component {
+    pub fn new(layer: u8, tint: [f32; 4], spritesheet_rect: [f32; 4], spritesheet_size: [f32; 2]) -> Component {
         Component {
             tint: tint,
+            layer: layer,
             spritesheet_rect: spritesheet_rect,
             spritesheet_size: spritesheet_size,
             mirror: false,
             dirty: true,
             dirty_2: true,
         }
+    }
+
+    pub fn set_layer(&mut self, layer: u8) {
+        self.layer = layer;
+        self.set_dirty();
     }
 
     pub fn set_mirror(&mut self, mirror: bool) {
@@ -37,6 +44,10 @@ impl Component {
     pub fn set_tint(&mut self, tint: [f32; 4]) {
         self.tint = tint;
         self.set_dirty();
+    }
+
+    pub fn get_layer(&self) -> u8 {
+        self.layer
     }
 
     pub fn get_mirror(&self) -> bool {

@@ -115,7 +115,7 @@ pub fn start() -> Result<(), ::utils::Error> {
 
         while match event_dev.try_recv_from_tile_builder() {
             Ok(event) => match event {
-                sys::tile_builder::SendEvent::NewTile(_, _, _) => {
+                sys::tile_builder::SendEvent::NewTile(_, _, _, _) => {
                     event_dev.send_to_game(game::RecvEvent::TileBuilder(event));
                     true
                 },

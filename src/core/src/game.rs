@@ -24,7 +24,7 @@ pub struct Game {
     fps_counter: ::utils::fps_counter::FpsCounter,
     default_tint: [f32; 4],
     tiles_render: ::comps::RenderType,
-    // p1_render: ::comps::RenderType,
+    p1_render: ::comps::RenderType,
 }
 
 impl Game {
@@ -155,7 +155,7 @@ impl Game {
                 ),
                 ::nalgebra::Vector3::new(1.0, 1.0, 1.0)
             ))
-            .with(::comps::RenderData::new(default_tint, ::art::spritesheet::p1::STAND, ::art::spritesheet::p1::SIZE))
+            .with(::comps::RenderData::new(::art::spritesheet::layers::PLAYER, default_tint, ::art::spritesheet::p1::STAND, ::art::spritesheet::p1::SIZE))
             .with(::comps::Physical::new(::math::Point2::new(0.0, 0.0), ::math::Point2::new(1.0, 1.0), ::math::Point2::new(0.001, 0.001)))
             .with(::comps::Living::new(
                 p1_idle,
@@ -229,7 +229,7 @@ impl Game {
             },
             fps_counter: ::utils::fps_counter::FpsCounter::new(),
             default_tint: default_tint,
-            // p1_render: p1_render,
+            p1_render: p1_render,
             tiles_render: tiles_render,
         })
     }
@@ -242,7 +242,7 @@ impl Game {
         self.last_time = new_time;
 
         match self.channel.1.try_recv() {
-            Ok(RecvEvent::TileBuilder(::sys::tile_builder::SendEvent::NewTile(location,connections, path_type))) => {
+            Ok(RecvEvent::TileBuilder(::sys::tile_builder::SendEvent::NewTile(location,connections, path_type, art_rect))) => {
                 match self.channel.0.send(SendEvent::TileBuilder(::sys::tile_builder::RecvEvent::TileMade(location.clone(), self.planner.mut_world().create_now()
                     .with(::comps::Tile::new(location.clone(), connections, path_type))
                     .with(self.tiles_render)
@@ -254,7 +254,7 @@ impl Game {
                             ::nalgebra::Vector3::new(1.0, 1.0, 1.0)
                         )
                     )
-                    .with(::comps::RenderData::new(self.default_tint, ::art::spritesheet::tiles::GRASS_MID, ::art::spritesheet::tiles::SIZE))
+                    .with(::comps::RenderData::new(::art::spritesheet::layers::TILES, self.default_tint, art_rect, ::art::spritesheet::tiles::SIZE))
                     .with(::comps::Clickable::new(::math::Rect::new_from_coords(0.0, 0.0, 1.0, 1.0)))
                     .build()))) {
                     Ok(()) => true,

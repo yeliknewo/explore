@@ -14,11 +14,11 @@ impl ::specs::System<::utils::Delta> for System {
     fn run(&mut self, arg: ::specs::RunArg, _: ::utils::Delta) {
         use specs::Join;
 
-        let (mut physical, mut render_data, mut living) = arg.fetch(|w|
-            (w.write::<::comps::Physical>(), w.write::<::comps::RenderData>(), w.write::<::comps::Living>())
+        let (mut physical, mut render_data, mut living, transform) = arg.fetch(|w|
+            (w.write::<::comps::Physical>(), w.write::<::comps::RenderData>(), w.write::<::comps::Living>(), w.read::<::comps::Transform>())
         );
 
-        for (mut p, mut rd, mut l) in (&mut physical, &mut render_data, &mut living).iter() {
+        for (mut p, mut rd, mut l, t) in (&mut physical, &mut render_data, &mut living, &transform).iter() {
             match l.get_state_pair() {
                 &(::comps::living::State::Idle, ::comps::living::StateData::Idle) => {
                     *p.get_mut_speed() = ::math::Point2::zero();
@@ -31,8 +31,9 @@ impl ::specs::System<::utils::Delta> for System {
                     *p.get_mut_speed() = dir.clone();
                 },
                 &(::comps::living::State::Walking, ::comps::living::StateData::MoveTo(ref location)) => {
-                    let mirror = location.get_x().is_sign_positive();
-                    if mirror != rd.get_mirror() && location.get_x().abs() > 0.1 {
+                    let x_dir = location.get_x() - t.get_pos().get_x();
+                    let mirror = x_dir.is_sign_positive();
+                    if mirror != rd.get_mirror() && x_dir.abs() > 0.1 {
                         rd.set_mirror(mirror);
                     }
                     *p.get_mut_speed() = ::math::Point2::zero();

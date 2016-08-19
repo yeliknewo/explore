@@ -95,8 +95,8 @@ impl Shaders {
 
 #[derive(Debug, Copy, Clone, Hash, PartialEq)]
 pub enum RendererType {
-    Color,
-    Texture,
+    // Color,
+    // Texture,
     Spritesheet,
 }
 
