@@ -3,6 +3,7 @@ pub struct GameEventHub {
     pub control_channel: Option<::sys::control::Channel>,
     pub render_channel: Option<::sys::render::Channel>,
     pub game_channel: Option<::game::Channel>,
+    pub tile_builder_channel: Option<::sys::tile_builder::Channel>,
 }
 
 impl GameEventHub {
@@ -10,11 +11,13 @@ impl GameEventHub {
         control_channel: ::sys::control::Channel,
         render_channel: ::sys::render::Channel,
         game_channel: ::game::Channel,
+        tile_builder_channel: ::sys::tile_builder::Channel,
     ) -> GameEventHub {
         GameEventHub {
             control_channel: Some(control_channel),
             render_channel: Some(render_channel),
             game_channel: Some(game_channel),
+            tile_builder_channel: Some(tile_builder_channel),
         }
     }
 }
@@ -27,6 +30,8 @@ pub struct DevEventHub {
     recv_from_render: ::std::sync::mpsc::Receiver<::sys::render::SendEvent>,
     send_to_game: ::std::sync::mpsc::Sender<::game::RecvEvent>,
     recv_from_game: ::std::sync::mpsc::Receiver<::game::SendEvent>,
+    send_to_tile_builder: ::std::sync::mpsc::Sender<::sys::tile_builder::RecvEvent>,
+    recv_from_tile_builder: ::std::sync::mpsc::Receiver<::sys::tile_builder::SendEvent>,
 }
 
 impl DevEventHub{
@@ -38,14 +43,17 @@ impl DevEventHub{
         let (send_from_render, recv_from_render) = ::std::sync::mpsc::channel();
         let (send_to_game, recv_to_game) = ::std::sync::mpsc::channel();
         let (send_from_game, recv_from_game) = ::std::sync::mpsc::channel();
+        let (send_to_tile_builder, recv_to_tile_builder) = ::std::sync::mpsc::channel();
+        let (send_from_tile_builder, recv_from_tile_builder) = ::std::sync::mpsc::channel();
 
         (
             DevEventHub::new_internal(
                 send_to_control, recv_from_control,
                 send_to_render, recv_from_render,
-                send_to_game, recv_from_game
+                send_to_game, recv_from_game,
+                send_to_tile_builder, recv_from_tile_builder
             ),
-            GameEventHub::new((send_from_control, recv_to_control), (send_from_render, recv_to_render), (send_from_game, recv_to_game))
+            GameEventHub::new((send_from_control, recv_to_control), (send_from_render, recv_to_render), (send_from_game, recv_to_game), (send_from_tile_builder, recv_to_tile_builder))
         )
     }
 
@@ -56,6 +64,8 @@ impl DevEventHub{
         recv_from_render: ::std::sync::mpsc::Receiver<::sys::render::SendEvent>,
         send_to_game: ::std::sync::mpsc::Sender<::game::RecvEvent>,
         recv_from_game: ::std::sync::mpsc::Receiver<::game::SendEvent>,
+        send_to_tile_builder: ::std::sync::mpsc::Sender<::sys::tile_builder::RecvEvent>,
+        recv_from_tile_builder: ::std::sync::mpsc::Receiver<::sys::tile_builder::SendEvent>,
     ) -> DevEventHub
     {
         DevEventHub {
@@ -65,6 +75,9 @@ impl DevEventHub{
             recv_from_render: recv_from_render,
             send_to_game: send_to_game,
             recv_from_game: recv_from_game,
+            send_to_tile_builder: send_to_tile_builder,
+            recv_from_tile_builder: recv_from_tile_builder,
+
         }
     }
 
@@ -129,6 +142,39 @@ impl DevEventHub{
                 error!("recv from game err: {}", err);
                 Err(::utils::Error::Logged)
             }
+        }
+    }
+
+    pub fn try_recv_from_game(&mut self) -> Result<::game::SendEvent, ::utils::Error> {
+        match self.recv_from_game.try_recv() {
+            Ok(event) => Ok(event),
+            Err(err) => match err {
+                ::std::sync::mpsc::TryRecvError::Empty => Err(::utils::Error::Empty),
+                ::std::sync::mpsc::TryRecvError::Disconnected => {
+                    error!("try recv from game was disconnected");
+                    Err(::utils::Error::Logged)
+                },
+            },
+        }
+    }
+
+    pub fn send_to_tile_builder(&mut self, event: ::sys::tile_builder::RecvEvent) {
+        match self.send_to_tile_builder.send(event) {
+            Ok(()) => (),
+            Err(err) => error!("send to tile builder error: {}", err),
+        }
+    }
+
+    pub fn try_recv_from_tile_builder(&mut self) -> Result<::sys::tile_builder::SendEvent, ::utils::Error> {
+        match self.recv_from_tile_builder.try_recv() {
+            Ok(event) => Ok(event),
+            Err(err) => match err {
+                ::std::sync::mpsc::TryRecvError::Empty => Err(::utils::Error::Empty),
+                ::std::sync::mpsc::TryRecvError::Disconnected => {
+                    error!("try recv from tile builder was disconnected");
+                    Err(::utils::Error::Logged)
+                },
+            },
         }
     }
 

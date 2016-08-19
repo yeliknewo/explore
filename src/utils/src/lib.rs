@@ -6,6 +6,7 @@ pub mod fps_counter;
 
 pub type Delta = f64;
 pub type Coord = f64;
+pub type CoordI = i32;
 pub type GfxCoord = f32;
 
 #[derive(Debug)]

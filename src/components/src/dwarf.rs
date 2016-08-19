@@ -2,6 +2,7 @@
 pub struct Component {
     target_tile: Option<::math::Point2>,
     speed: ::utils::Coord,
+    gen_range: ::utils::CoordI,
 }
 
 impl ::specs::Component for Component {
@@ -13,6 +14,7 @@ impl Component {
         Component {
             target_tile: None,
             speed: speed,
+            gen_range: 5,
         }
     }
 
@@ -30,5 +32,9 @@ impl Component {
 
     pub fn get_mut_target_tile_opt(&mut self) -> &mut Option<::math::Point2> {
         &mut self.target_tile
+    }
+
+    pub fn get_gen_range(&self) -> ::utils::CoordI {
+        self.gen_range
     }
 }

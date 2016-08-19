@@ -79,6 +79,45 @@ impl LineSeg {
     }
 }
 
+#[derive(Debug, Hash, Eq, PartialEq, Clone)]
+pub struct Point2I {
+    x: ::utils::CoordI,
+    y: ::utils::CoordI,
+}
+
+impl Point2I {
+    pub fn new(x: ::utils::CoordI, y: ::utils::CoordI) -> Point2I {
+        Point2I {
+            x: x,
+            y: y,
+        }
+    }
+
+    pub fn get_x(&self) -> ::utils::CoordI {
+        self.x
+    }
+
+    pub fn get_y(&self) -> ::utils::CoordI {
+        self.y
+    }
+
+    pub fn get_mut_x(&mut self) -> &mut ::utils::CoordI {
+        &mut self.x
+    }
+
+    pub fn get_mut_y(&mut self) -> &mut ::utils::CoordI {
+        &mut self.y
+    }
+}
+
+impl std::ops::Add<Point2I> for Point2I {
+    type Output = Point2I;
+
+    fn add(self, other: Point2I) -> Point2I {
+        Point2I::new(self.get_x() + other.get_x(), self.get_y() + other.get_y())
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Point2 {
     x: ::utils::Coord,
@@ -202,5 +241,11 @@ impl std::ops::MulAssign<::utils::Coord> for Point2 {
 impl std::fmt::Display for Point2 {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "({},{})", self.get_x(), self.get_y())
+    }
+}
+
+impl ::std::convert::Into<Point2I> for Point2 {
+    fn into(self) -> Point2I {
+        Point2I::new(self.get_x().round() as ::utils::CoordI, self.get_y().round() as ::utils::CoordI)
     }
 }

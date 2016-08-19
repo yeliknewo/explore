@@ -100,7 +100,7 @@ pub fn start() -> Result<(), ::utils::Error> {
                 sys::control::SendEvent::Error(err) => match err {
                     utils::Error::Empty => {
                         error!("control send event error was empty");
-                        return Err(utils::Error::Empty);
+                        return Err(utils::Error::Logged);
                     },
                     utils::Error::Logged => return Err(utils::Error::Logged),
                 },
@@ -111,6 +111,36 @@ pub fn start() -> Result<(), ::utils::Error> {
             },
             Err(::utils::Error::Empty) => (),
             Err(::utils::Error::Logged) => return Err(::utils::Error::Logged),
+        }
+
+        while match event_dev.try_recv_from_tile_builder() {
+            Ok(event) => match event {
+                sys::tile_builder::SendEvent::NewTile(_, _, _) => {
+                    event_dev.send_to_game(game::RecvEvent::TileBuilder(event));
+                    true
+                },
+            },
+            Err(::utils::Error::Empty) => false,
+            Err(::utils::Error::Logged) => return Err(utils::Error::Logged),
+        } {
+
+        }
+
+        while match event_dev.try_recv_from_game() {
+            Ok(event) => match event {
+                ::game::SendEvent::TileBuilder(event) => {
+                    event_dev.send_to_tile_builder(event);
+                    true
+                },
+                ::game::SendEvent::Exited => {
+                    error!("game exited while in main loop");
+                    return Err(::utils::Error::Logged);
+                },
+            },
+            Err(::utils::Error::Empty) => false,
+            Err(::utils::Error::Logged) => return Err(::utils::Error::Logged),
+        } {
+
         }
     }
 

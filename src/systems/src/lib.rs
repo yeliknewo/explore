@@ -17,9 +17,11 @@ pub mod dwarf;
 pub mod living;
 pub mod physical;
 pub mod render;
+pub mod tile_builder;
 
 pub use self::control::System as Control;
 pub use self::dwarf::System as Dwarf;
 pub use self::living::System as Living;
 pub use self::physical::System as Physical;
 pub use self::render::System as Render;
+pub use self::tile_builder::System as TileBuilder;
