@@ -12,33 +12,37 @@ impl System {
 
 impl ::specs::System<::utils::Delta> for System {
     fn run(&mut self, arg: ::specs::RunArg, time: ::utils::Delta) {
-        use specs::Join;
+        use ::specs::Join;
 
-        let (physical, transform, clickable, dwarf, mut living) = arg.fetch(|w|
-            (w.read::<::comps::Physical>(), w.read::<::comps::Transform>(), w.read::<::comps::Clickable>(), w.read::<::comps::Dwarf>(), w.write::<::comps::Living>())
+        let (mut dwarf, mut living, transform, physical) = arg.fetch(|w|
+            (w.write::<::comps::Dwarf>(), w.write::<::comps::Living>(), w.read::<::comps::Transform>(), w.read::<::comps::Physical>())
         );
 
-        let mut target_opt = None;
+        for (mut d, mut l, t, p) in (&mut dwarf, &mut living, &transform, &physical).iter() {
+            let speed = d.get_speed();
 
-        for (t, c) in (&transform, &clickable).iter() {
-            if c.clicked {
-                target_opt = Some(t.get_pos());
-            }
-        }
+            let mut pp = d.get_mut_point_path();
 
-        for (d, mut l, t, p) in (&dwarf, &mut living, &transform, &physical).iter() {
-            if let Some(target) = target_opt.as_ref() {
-                let offset_from_target = target.clone() - t.get_pos();
+            while {
+                if let Some(target) = pp.pop() {
+                    let offset_from_target = target.clone() - t.get_pos();
 
-                if offset_from_target.length() < p.get_speed_break().length() {
-                    l.idle();
-                } else if offset_from_target.length() < d.get_speed() * time {
-                    l.walk_to(target.clone());
+                    if offset_from_target.length() < p.get_speed_break().length() {
+                        true
+                    } else if offset_from_target.length() < speed * time {
+                        l.walk_to(target.clone());
+                        false
+                    } else {
+                        l.walk(offset_from_target.normalized() * speed);
+                        pp.push(target);
+                        false
+                    }
                 } else {
-                    l.walk(offset_from_target.normalized() * d.get_speed());
+                    l.idle();
+                    false
                 }
-            } else {
-                l.idle();
+            } {
+
             }
         }
     }

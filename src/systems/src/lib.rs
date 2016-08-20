@@ -14,15 +14,19 @@ extern crate math;
 extern crate art;
 
 pub mod control;
+pub mod dwarf_path_finder;
 pub mod dwarf;
 pub mod living;
 pub mod physical;
 pub mod render;
 pub mod tile_builder;
+pub mod tile_link_updater;
 
 pub use self::control::System as Control;
+pub use self::dwarf_path_finder::System as DwarfPathFinder;
 pub use self::dwarf::System as Dwarf;
 pub use self::living::System as Living;
 pub use self::physical::System as Physical;
 pub use self::render::System as Render;
 pub use self::tile_builder::System as TileBuilder;
+pub use self::tile_link_updater::System as TileLinkUpdater;

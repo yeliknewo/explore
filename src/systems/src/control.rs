@@ -40,7 +40,6 @@ pub struct System {
     mouse_button: Vec<(bool, ::glutin::MouseButton)>,
     screen_resolution: ::math::Point2,
     ortho_helper: ::math::OrthographicHelper,
-    default_tint: [f32; 4],
     exited: bool,
 }
 
@@ -51,7 +50,6 @@ impl System {
         mouse_location: ::math::Point2,
         screen_resolution: ::math::Point2,
         ortho_helper: ::math::OrthographicHelper,
-        default_tint: [f32; 4]
     ) -> System
     {
         System {
@@ -64,7 +62,6 @@ impl System {
             mouse_button: vec!(),
             screen_resolution: screen_resolution,
             ortho_helper: ortho_helper,
-            default_tint: default_tint,
             exited: false,
         }
     }
@@ -201,10 +198,10 @@ impl ::specs::System<::utils::Delta> for System {
                     for (t, mut c, mut td) in (&transform, &mut clickable, &mut texture_data).iter() {
                         if  c.hitbox.check_collide_point(camera.screen_to_world_point(self.mouse_location.clone()) + t.get_gui_offset()) {
                             c.clicked = true;
-                            td.set_tint([1.0, 1.0, 1.0, 1.0]);
+                            td.set_tint(::art::spritesheet::tiles::SELECTED_TINT);
                         } else if c.clicked {
                             c.clicked = false;
-                            td.set_tint(self.default_tint);
+                            td.set_tint(::art::spritesheet::tiles::FOREGROUND_TINT);
                         }
                     }
                 },

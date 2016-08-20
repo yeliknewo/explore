@@ -5,7 +5,7 @@ pub type Channel = (
 
 #[derive(Debug)]
 pub enum SendEvent {
-    NewTile(::math::Point2I, Vec<::math::Point2I>, ::comps::tile::PathType, [f32; 4]),
+    NewTile(::math::Point2I, Vec<::comps::tile::Link>, ::comps::tile::PathType, [f32; 4]),
 }
 
 #[derive(Debug)]
@@ -24,16 +24,16 @@ impl System {
         }
     }
 
-    fn get_connections(&self, location: &::math::Point2I) -> Vec<::math::Point2I> {
+    fn get_links(&self, location: &::math::Point2I) -> Vec<::comps::tile::Link> {
         vec!(
-            location.clone() + ::math::Point2I::new(1, -1),
-            location.clone() + ::math::Point2I::new(0, -1),
-            location.clone() + ::math::Point2I::new(-1, -1),
-            location.clone() + ::math::Point2I::new(1, 0),
-            location.clone() + ::math::Point2I::new(1, 1),
-            location.clone() + ::math::Point2I::new(0, 1),
-            location.clone() + ::math::Point2I::new(-1, 1),
-            location.clone() + ::math::Point2I::new(-1, 0),
+            (location.clone() + ::math::Point2I::new(1, -1), 3),
+            (location.clone() + ::math::Point2I::new(0, -1), 1),
+            (location.clone() + ::math::Point2I::new(-1, -1), 3),
+            (location.clone() + ::math::Point2I::new(1, 0), 1),
+            (location.clone() + ::math::Point2I::new(1, 1), 3),
+            (location.clone() + ::math::Point2I::new(0, 1), 1),
+            (location.clone() + ::math::Point2I::new(-1, 1), 3),
+            (location.clone() + ::math::Point2I::new(-1, 0), 1),
         )
     }
 }
@@ -87,10 +87,13 @@ impl ::specs::System<::utils::Delta> for System {
                     let checking: ::math::Point2I = conv + ::math::Point2I::new(x, y);
 
                     if tile_map.get_tile(&checking).is_none() {
-                        if checking.get_y() < 10 {
+                        if checking.get_y() < 10
+                        && (checking.get_x() != 2 || checking.get_y() != 2)
+                        && (checking.get_x() != 3 || checking.get_y() != 2)
+                        {
                             match self.channel.0.send(SendEvent::NewTile(
                                 checking.clone(),
-                                self.get_connections(&checking),
+                                self.get_links(&checking),
                                 ::comps::tile::PathType::Walkable,
                                 {
                                     if checking.get_y() < 9 {

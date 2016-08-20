@@ -1,15 +1,17 @@
 #[derive(Debug)]
 pub struct Component {
     location: ::math::Point2I,
-    connections: Vec<::math::Point2I>,
+    links: Vec<Link>,
+    fast_links: Vec<FastLink>,
     path_type: PathType,
 }
 
 impl Component {
-    pub fn new(location: ::math::Point2I, connections: Vec<::math::Point2I>, path_type: PathType) -> Component {
+    pub fn new(location: ::math::Point2I, links: Vec<Link>, path_type: PathType) -> Component {
         Component {
             location: location,
-            connections: connections,
+            links: links,
+            fast_links: vec!(),
             path_type: path_type,
         }
     }
@@ -18,12 +20,20 @@ impl Component {
         &self.location
     }
 
-    pub fn get_connections(&self) -> &Vec<::math::Point2I> {
-        &self.connections
+    pub fn get_links(&self) -> &Vec<Link> {
+        &self.links
     }
 
-    pub fn get_mut_connections(&mut self) -> &mut Vec<::math::Point2I> {
-        &mut self.connections
+    pub fn get_fast_links(&self) -> &Vec<FastLink> {
+        &self.fast_links
+    }
+
+    pub fn get_mut_fast_links(&mut self) -> &mut Vec<FastLink> {
+        &mut self.fast_links
+    }
+
+    pub fn get_mut_links(&mut self) -> &mut Vec<Link> {
+        &mut self.links
     }
 
     pub fn get_path_type(&self) -> &PathType {
@@ -38,6 +48,16 @@ impl Component {
 impl ::specs::Component for Component {
     type Storage = ::specs::VecStorage<Component>;
 }
+
+pub type Link = (
+    ::math::Point2I,
+    u32
+);
+
+pub type FastLink = (
+    ::specs::Entity,
+    u32
+);
 
 #[derive(Debug)]
 pub enum PathType {

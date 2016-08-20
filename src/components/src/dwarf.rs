@@ -1,6 +1,8 @@
 #[derive(Debug)]
 pub struct Component {
     target_tile: Option<::math::Point2>,
+    // entity_path: Option<::specs::Entity>,
+    point_path: Vec<::math::Point2>,
     speed: ::utils::Coord,
     gen_range: ::utils::CoordI,
 }
@@ -13,6 +15,8 @@ impl Component {
     pub fn new(speed: ::utils::Coord) -> Component {
         Component {
             target_tile: None,
+            // entity_path: None,
+            point_path: vec!(),
             speed: speed,
             gen_range: 5,
         }
@@ -24,6 +28,14 @@ impl Component {
 
     pub fn get_speed(&self) -> ::utils::Coord {
         self.speed
+    }
+
+    // pub fn get_mut_entity_path_opt(&mut self) -> &mut Option<::specs::Entity> {
+    //     &mut self.entity_path
+    // }
+
+    pub fn get_mut_point_path(&mut self) -> &mut Vec<::math::Point2> {
+        &mut self.point_path
     }
 
     pub fn get_mut_target_tile(&mut self) -> Option<&mut ::math::Point2> {

@@ -26,6 +26,8 @@ pub mod layers {
 pub mod p1 {
     pub const SIZE:   [f32; 2] = [508.0, 288.0];
 
+    pub const DEFAULT_TINT: [f32; 4] = [0.5, 0.5, 0.5, 1.0];
+
     pub const DUCK:   [f32; 4] = [365.0, 98.0,  69.0, 71.0];
     pub const FRONT:  [f32; 4] = [0.0,   196.0, 66.0, 92.0];
     pub const HURT:   [f32; 4] = [438.0, 0.0,   69.0, 92.0];
@@ -60,6 +62,12 @@ pub mod p1 {
 
 pub mod tiles {
     pub const SIZE:      [f32; 2] = [914.0, 936.0];
+
+    pub const SELECTED_TINT: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
+
+    pub const FOREGROUND_TINT: [f32; 4] = [0.5, 0.5, 0.5, 1.0];
+
+    pub const BACKGROUND_TINT: [f32; 4] = [0.1, 0.1, 0.1, 1.0];
 
     pub const GRASS:     [f32; 4] = [648.0, 0.0,   70.0, 70.0];
     // pub const GRASS_MID: [f32; 4] = [504.0, 576.0, 70.0, 70.0];

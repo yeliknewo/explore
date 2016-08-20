@@ -250,7 +250,7 @@ impl System {
         let (vbuf, slice) = factory.create_vertex_buffer_with_slice(vertices, indices);
         let data = ::graphics::spritesheet::pipe::Data {
             vbuf: vbuf,
-            spritesheet: (spritesheet, factory.create_sampler_linear()),
+            spritesheet: (spritesheet, factory.create_sampler(sampler_info)),
             texture_data: factory.create_constant_buffer(1),
             projection_cb: factory.create_constant_buffer(1),
             out_color: self.out_color.clone(),
