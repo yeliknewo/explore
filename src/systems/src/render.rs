@@ -242,6 +242,11 @@ impl System {
             }
         };
 
+        let sampler_info = ::gfx::tex::SamplerInfo::new(
+            ::gfx::tex::FilterMethod::Scale,
+            ::gfx::tex::WrapMode::Mirror
+        );
+
         let (vbuf, slice) = factory.create_vertex_buffer_with_slice(vertices, indices);
         let data = ::graphics::spritesheet::pipe::Data {
             vbuf: vbuf,

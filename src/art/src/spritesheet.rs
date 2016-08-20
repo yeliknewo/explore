@@ -62,6 +62,8 @@ pub mod tiles {
     pub const SIZE:      [f32; 2] = [914.0, 936.0];
 
     pub const GRASS:     [f32; 4] = [648.0, 0.0,   70.0, 70.0];
-    pub const GRASS_MID: [f32; 4] = [504.0, 576.0, 70.0, 70.0];
-    pub const GRASS_CENTER: [f32; 4] = [576.0, 864.0, 70.0, 70.0];
+    // pub const GRASS_MID: [f32; 4] = [504.0, 576.0, 70.0, 70.0];
+    pub const GRASS_MID: [f32; 4] = [504.0 + 1.0,  576.0 + 1.0, 70.0 - 2.0, 70.0 - 2.0];
+    // pub const GRASS_CENTER: [f32; 4] = [576.0, 864.0, 70.0, 70.0];
+    pub const GRASS_CENTER: [f32; 4] = [576.0 + 1.0, 864.0 + 1.0, 70.0 - 2.0, 70.0 - 2.0];
 }

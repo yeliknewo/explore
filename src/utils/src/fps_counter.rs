@@ -18,7 +18,11 @@ impl FpsCounter {
 
         while self.current_delta > 1.0 {
             self.current_delta -= 1.0;
-            info!("FPS: {}", self.frames);
+            if self.frames < 50 {
+                warn!("FPS Low: {}", self.frames);
+            } else {
+                info!("FPS: {}", self.frames);
+            }
             self.frames = 0;
         }
     }
