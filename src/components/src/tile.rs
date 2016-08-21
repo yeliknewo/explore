@@ -51,12 +51,12 @@ impl ::specs::Component for Component {
 
 pub type Link = (
     ::math::Point2I,
-    u32
+    f64
 );
 
 pub type FastLink = (
     ::specs::Entity,
-    u32
+    f64
 );
 
 #[derive(Debug)]

@@ -26,14 +26,14 @@ impl System {
 
     fn get_links(&self, location: &::math::Point2I) -> Vec<::comps::tile::Link> {
         vec!(
-            (location.clone() + ::math::Point2I::new(1, -1), 3),
-            (location.clone() + ::math::Point2I::new(0, -1), 1),
-            (location.clone() + ::math::Point2I::new(-1, -1), 3),
-            (location.clone() + ::math::Point2I::new(1, 0), 1),
-            (location.clone() + ::math::Point2I::new(1, 1), 3),
-            (location.clone() + ::math::Point2I::new(0, 1), 1),
-            (location.clone() + ::math::Point2I::new(-1, 1), 3),
-            (location.clone() + ::math::Point2I::new(-1, 0), 1),
+            (location.clone() + ::math::Point2I::new(1, -1), 2f64.sqrt()),
+            (location.clone() + ::math::Point2I::new(0, -1), 1.0),
+            (location.clone() + ::math::Point2I::new(-1, -1), 2f64.sqrt()),
+            (location.clone() + ::math::Point2I::new(1, 0), 1.0),
+            (location.clone() + ::math::Point2I::new(1, 1), 2f64.sqrt()),
+            (location.clone() + ::math::Point2I::new(0, 1), 1.0),
+            (location.clone() + ::math::Point2I::new(-1, 1), 2f64.sqrt()),
+            (location.clone() + ::math::Point2I::new(-1, 0), 1.0),
         )
     }
 }

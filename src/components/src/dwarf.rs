@@ -30,6 +30,10 @@ impl Component {
         self.speed
     }
 
+    pub fn get_point_path(&self) -> &Vec<::math::Point2> {
+        &self.point_path
+    }
+
     // pub fn get_mut_entity_path_opt(&mut self) -> &mut Option<::specs::Entity> {
     //     &mut self.entity_path
     // }

@@ -9,6 +9,7 @@ gfx_device_gl = "*"
 glutin = "*"
 specs = "*"
 nalgebra = "*"
+time = "*"
 log = "*"
 env_logger = "*"
 

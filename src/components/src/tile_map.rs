@@ -1,13 +1,27 @@
 #[derive(Debug)]
 pub struct Component {
     tiles: ::std::collections::HashMap<::math::Point2I, ::specs::Entity>,
+    dirty: bool,
 }
 
 impl Component {
     pub fn new() -> Component {
         Component {
             tiles: ::std::collections::HashMap::new(),
+            dirty: true,
         }
+    }
+
+    fn make_dirty(&mut self) {
+        self.dirty = true;
+    }
+
+    pub fn make_clean(&mut self) {
+        self.dirty = false;
+    }
+
+    pub fn get_dirty(&self) -> bool {
+        self.dirty
     }
 
     pub fn get_tile(&self, location: &::math::Point2I) -> Option<&::specs::Entity> {
@@ -19,6 +33,7 @@ impl Component {
     }
 
     pub fn get_mut_tiles(&mut self) -> &mut ::std::collections::HashMap<::math::Point2I, ::specs::Entity> {
+        self.make_dirty();
         &mut self.tiles
     }
 }

@@ -18,8 +18,6 @@ pub enum SendEvent {
 pub struct Game {
     planner: ::specs::Planner<::utils::Delta>,
     last_time: u64,
-    target_fps_delta: ::utils::Delta,
-    current_fps_delta: ::utils::Delta,
     channel: Channel,
     fps_counter: ::utils::fps_counter::FpsCounter,
     tiles_render: ::comps::RenderType,
@@ -34,6 +32,8 @@ impl Game {
         screen_resolution: ::math::Point2,
         ortho_helper: ::math::OrthographicHelper
     ) -> Result<Game, ::utils::Error> {
+        let target_delta_time = 1.0 / 60.0;
+
         let mut planner = {
             let mut w = ::specs::World::new();
 
@@ -47,6 +47,7 @@ impl Game {
             w.register::<::comps::Physical>();
             w.register::<::comps::Tile>();
             w.register::<::comps::TileMap>();
+            w.register::<::comps::PathFindingData>();
 
             ::specs::Planner::<::utils::Delta>::new(w, 8)
         };
@@ -143,24 +144,27 @@ impl Game {
 
         let p1_fall = vec!(::art::spritesheet::p1::HURT);
 
-        planner.mut_world().create_now()
-            .with(p1_render)
-            .with(::comps::Transform::new(
-                ::nalgebra::Isometry3::new(
-                    ::nalgebra::Vector3::new(0.0, 0.0, 1.0),
-                    ::nalgebra::Vector3::new(0.0, 0.0, 0.0)
-                ),
-                ::nalgebra::Vector3::new(1.0, 1.0, 1.0)
-            ))
-            .with(::comps::RenderData::new(::art::spritesheet::layers::PLAYER, ::art::spritesheet::p1::DEFAULT_TINT, ::art::spritesheet::p1::STAND, ::art::spritesheet::p1::SIZE))
-            .with(::comps::Physical::new(::math::Point2::new(0.0, 0.0), ::math::Point2::new(1.0, 1.0), ::math::Point2::new(0.001, 0.001)))
-            .with(::comps::Living::new(
-                p1_idle,
-                p1_walk,
-                p1_fall
-            ))
-            .with(::comps::Dwarf::new(5.0))
-            .build();
+        for _ in 0..5 {
+            planner.mut_world().create_now()
+                .with(p1_render)
+                .with(::comps::Transform::new(
+                    ::nalgebra::Isometry3::new(
+                        ::nalgebra::Vector3::new(0.0, 0.0, 1.0),
+                        ::nalgebra::Vector3::new(0.0, 0.0, 0.0)
+                    ),
+                    ::nalgebra::Vector3::new(1.0, 1.0, 1.0)
+                ))
+                .with(::comps::RenderData::new(::art::spritesheet::layers::PLAYER, ::art::spritesheet::p1::DEFAULT_TINT, ::art::spritesheet::p1::STAND, ::art::spritesheet::p1::SIZE))
+                .with(::comps::Physical::new(::math::Point2::new(0.0, 0.0), ::math::Point2::new(1.0, 1.0), ::math::Point2::new(0.001, 0.001)))
+                .with(::comps::Living::new(
+                    p1_idle.clone(),
+                    p1_walk.clone(),
+                    p1_fall.clone()
+                ))
+                .with(::comps::Dwarf::new(5.0))
+                .with(::comps::PathFindingData::new())
+                .build();
+        }
 
         planner.add_system(
             ::sys::control::System::new(
@@ -186,9 +190,15 @@ impl Game {
         );
 
         planner.add_system(
-            ::sys::DwarfPathFinder::new(),
+            ::sys::DwarfPathFinder::new(target_delta_time),
             "dwarf path finder",
             28
+        );
+
+        planner.add_system(
+            ::sys::DwarfPathApplier::new(),
+            "dwarf path applier",
+            27
         );
 
         planner.add_system(
@@ -226,8 +236,6 @@ impl Game {
         Ok(Game {
             planner: planner,
             last_time: ::time::precise_time_ns(),
-            target_fps_delta: 1.0 / 60.0,
-            current_fps_delta: 0.0,
             channel: match game_event_hub.game_channel.take() {
                 Some(channel) => channel,
                 None => {
@@ -245,7 +253,6 @@ impl Game {
     pub fn frame(&mut self) -> bool {
         let new_time = ::time::precise_time_ns();
         let delta = (new_time - self.last_time) as ::utils::Delta / 1e9;
-        self.current_fps_delta += delta;
         self.last_time = new_time;
 
         match self.channel.1.try_recv() {
@@ -272,13 +279,8 @@ impl Game {
                 }
             }
             Err(::std::sync::mpsc::TryRecvError::Empty) => {
-                if self.current_fps_delta > self.target_fps_delta {
-                    self.planner.dispatch(self.current_fps_delta);
-                    self.fps_counter.frame(self.current_fps_delta);
-                    self.current_fps_delta = 0.0;
-                } else {
-                    ::std::thread::sleep(::std::time::Duration::new(0, ((self.target_fps_delta - self.current_fps_delta* 0.99) * 1e9) as u32));
-                }
+                self.planner.dispatch(delta);
+                self.fps_counter.frame(delta);
                 true
             },
             Ok(RecvEvent::Exit) |

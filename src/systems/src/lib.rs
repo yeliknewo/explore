@@ -3,6 +3,7 @@ extern crate gfx_device_gl;
 extern crate glutin;
 extern crate specs;
 extern crate nalgebra;
+extern crate time;
 #[macro_use]
 extern crate log;
 extern crate env_logger;
@@ -14,6 +15,7 @@ extern crate math;
 extern crate art;
 
 pub mod control;
+pub mod dwarf_path_applier;
 pub mod dwarf_path_finder;
 pub mod dwarf;
 pub mod living;
@@ -23,6 +25,7 @@ pub mod tile_builder;
 pub mod tile_link_updater;
 
 pub use self::control::System as Control;
+pub use self::dwarf_path_applier::System as DwarfPathApplier;
 pub use self::dwarf_path_finder::System as DwarfPathFinder;
 pub use self::dwarf::System as Dwarf;
 pub use self::living::System as Living;
