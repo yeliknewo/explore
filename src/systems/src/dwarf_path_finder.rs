@@ -23,7 +23,14 @@ impl ::specs::System<::utils::Delta> for System {
         let new_time = ::time::precise_time_s();
 
         let (tile_map, transform, clickable, dwarf, tiles, mut path_finding_data) = arg.fetch(|w|
-            (w.read::<::comps::TileMap>(), w.read::<::comps::Transform>(), w.read::<::comps::Clickable>(), w.read::<::comps::Dwarf>(), w.read::<::comps::Tile>(), w.write::<::comps::PathFindingData>())
+            (
+                w.read::<::comps::TileMap>(),
+                w.read::<::comps::Transform>(),
+                w.read::<::comps::Clickable>(),
+                w.read::<::comps::Dwarf>(),
+                w.read::<::comps::Tile>(),
+                w.write::<::comps::PathFindingData>()
+            )
         );
 
         self.count_time += time;

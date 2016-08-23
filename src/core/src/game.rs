@@ -48,6 +48,7 @@ impl Game {
             w.register::<::comps::Tile>();
             w.register::<::comps::TileMap>();
             w.register::<::comps::PathFindingData>();
+            w.register::<::comps::PathsStorage>();
 
             ::specs::Planner::<::utils::Delta>::new(w, 8)
         };

@@ -5,7 +5,7 @@ pub struct System {
 impl System {
     pub fn new() -> System {
         System {
-            
+
         }
     }
 }
@@ -15,7 +15,10 @@ impl ::specs::System<::utils::Delta> for System {
         use ::specs::Join;
 
         let (tile_map, mut tiles) = arg.fetch(|w|
-            (w.read::<::comps::TileMap>(), w.write::<::comps::Tile>())
+            (
+                w.read::<::comps::TileMap>(),
+                w.write::<::comps::Tile>()
+            )
         );
 
         let tile_map = {

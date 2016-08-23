@@ -275,9 +275,14 @@ impl System {
     fn render(&mut self, arg: &::specs::RunArg, mut encoder: ::gfx::Encoder<::gfx_device_gl::Resources, ::gfx_device_gl::CommandBuffer>) -> Result<(), ::utils::Error> {
         use specs::Join;
 
-        let (draw, transform, mut camera, mut render_data) = arg.fetch(|w| {
-            (w.read::<::comps::RenderType>(), w.read::<::comps::Transform>(), w.write::<::comps::Camera>(), w.write::<::comps::RenderData>())
-        });
+        let (draw, transform, mut camera, mut render_data) = arg.fetch(|w|
+            (
+                w.read::<::comps::RenderType>(),
+                w.read::<::comps::Transform>(),
+                w.write::<::comps::Camera>(),
+                w.write::<::comps::RenderData>()
+            )
+        );
 
         encoder.clear(&self.out_color, [1.0, 1.0, 1.0, 1.0]);
         encoder.clear_depth(&self.out_depth, 1.0);

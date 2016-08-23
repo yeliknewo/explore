@@ -145,9 +145,14 @@ impl ::specs::System<::utils::Delta> for System {
             return;
         }
 
-        let (mut camera, mut clickable, mut texture_data, transform) = arg.fetch(|w| {
-            (w.write::<::comps::Camera>(), w.write::<::comps::Clickable>(), w.write::<::comps::RenderData>(), w.read::<::comps::Transform>())
-        });
+        let (transform, mut camera, mut clickable, mut texture_data) = arg.fetch(|w|
+            (
+                w.read::<::comps::Transform>(),
+                w.write::<::comps::Camera>(),
+                w.write::<::comps::Clickable>(),
+                w.write::<::comps::RenderData>()
+            )
+        );
 
         let mut camera_opt = None;
 

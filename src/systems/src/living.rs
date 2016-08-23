@@ -14,8 +14,13 @@ impl ::specs::System<::utils::Delta> for System {
     fn run(&mut self, arg: ::specs::RunArg, _: ::utils::Delta) {
         use specs::Join;
 
-        let (mut physical, mut render_data, mut living, transform) = arg.fetch(|w|
-            (w.write::<::comps::Physical>(), w.write::<::comps::RenderData>(), w.write::<::comps::Living>(), w.read::<::comps::Transform>())
+        let (transform, mut physical, mut render_data, mut living) = arg.fetch(|w|
+            (
+                w.read::<::comps::Transform>(),
+                w.write::<::comps::Physical>(),
+                w.write::<::comps::RenderData>(),
+                w.write::<::comps::Living>()
+            )
         );
 
         for (mut p, mut rd, mut l, t) in (&mut physical, &mut render_data, &mut living, &transform).iter() {

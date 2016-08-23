@@ -26,13 +26,13 @@ impl System {
 
     fn get_links(&self, location: &::math::Point2I) -> Vec<::comps::tile::Link> {
         vec!(
-            (location.clone() + ::math::Point2I::new(1, -1), 2f64.sqrt()),
+            // (location.clone() + ::math::Point2I::new(1, -1), 2f64.sqrt()),
             (location.clone() + ::math::Point2I::new(0, -1), 1.0),
-            (location.clone() + ::math::Point2I::new(-1, -1), 2f64.sqrt()),
+            // (location.clone() + ::math::Point2I::new(-1, -1), 2f64.sqrt()),
             (location.clone() + ::math::Point2I::new(1, 0), 1.0),
-            (location.clone() + ::math::Point2I::new(1, 1), 2f64.sqrt()),
+            // (location.clone() + ::math::Point2I::new(1, 1), 2f64.sqrt()),
             (location.clone() + ::math::Point2I::new(0, 1), 1.0),
-            (location.clone() + ::math::Point2I::new(-1, 1), 2f64.sqrt()),
+            // (location.clone() + ::math::Point2I::new(-1, 1), 2f64.sqrt()),
             (location.clone() + ::math::Point2I::new(-1, 0), 1.0),
         )
     }
@@ -42,8 +42,12 @@ impl ::specs::System<::utils::Delta> for System {
     fn run(&mut self, arg: ::specs::RunArg, _: ::utils::Delta) {
         use ::specs::Join;
 
-        let (mut tile_map, dwarf, transform) = arg.fetch(|w|
-            (w.write::<::comps::TileMap>(), w.read::<::comps::Dwarf>(), w.read::<::comps::Transform>())
+        let (dwarf, transform, mut tile_map) = arg.fetch(|w|
+            (
+                w.read::<::comps::Dwarf>(),
+                w.read::<::comps::Transform>(),
+                w.write::<::comps::TileMap>()
+            )
         );
 
         let mut tile_map_opt = None;

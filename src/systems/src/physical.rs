@@ -15,7 +15,10 @@ impl ::specs::System<::utils::Delta> for System {
         use specs::Join;
 
         let (mut transform, mut physical) = arg.fetch(|w|
-            (w.write::<::comps::Transform>(), w.write::<::comps::Physical>())
+            (
+                w.write::<::comps::Transform>(),
+                w.write::<::comps::Physical>()
+            )
         );
 
         for (mut t, mut p) in (&mut transform, &mut physical).iter() {

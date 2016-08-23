@@ -15,7 +15,10 @@ impl ::specs::System<::utils::Delta> for System {
         use specs::Join;
 
         let (mut dwarf, mut path_finding_data) = arg.fetch(|w|
-            (w.write::<::comps::Dwarf>(), w.write::<::comps::PathFindingData>())
+            (
+                w.write::<::comps::Dwarf>(),
+                w.write::<::comps::PathFindingData>()
+            )
         );
 
         for (mut d, mut pfd) in (&mut dwarf, &mut path_finding_data).iter() {
