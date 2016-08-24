@@ -40,13 +40,25 @@ impl ::specs::Component for Component {
     type Storage = ::specs::VecStorage<Component>;
 }
 
-#[derive(Debug, Clone)]
-pub enum PathData {
-    Data(Vec<PathFindingNode>, Vec<usize>, Vec<usize>, ::math::Point2),
-}
+// #[derive(Debug, Clone)]
+// pub enum PathData {
+//     Data(Vec<PathFindingNode>, Vec<usize>, Vec<usize>, ::math::Point2),
+// }
 
-#[derive(Debug, Clone)]
-pub enum PathFindingNode {
-    Start(::specs::Entity, usize, f64),
-    Node(::specs::Entity, usize, f64),
-}
+pub type PathData = (
+    Vec<PathNode>,  //nodes
+    Vec<usize>,     //open
+    Vec<usize>      //closed
+);
+
+pub type PathNode = (
+    ::specs::Entity,    //tile id
+    usize,              //from node index
+    f64                 //distance
+);
+
+// #[derive(Debug, Clone)]
+// pub enum PathFindingNode {
+//     Start(::specs::Entity, usize, f64),
+//     Node(::specs::Entity, usize, f64),
+// }

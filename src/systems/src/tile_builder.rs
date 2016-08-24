@@ -42,26 +42,13 @@ impl ::specs::System<::utils::Delta> for System {
     fn run(&mut self, arg: ::specs::RunArg, _: ::utils::Delta) {
         use ::specs::Join;
 
-        let (dwarf, transform, mut tile_map) = arg.fetch(|w|
+        let (dwarves, transforms, mut tile_map) = arg.fetch(|w|
             (
                 w.read::<::comps::Dwarf>(),
                 w.read::<::comps::Transform>(),
-                w.write::<::comps::TileMap>()
+                w.write_resource::<::comps::TileMap>()
             )
         );
-
-        let mut tile_map_opt = None;
-
-        for tm in (&mut tile_map).iter() {
-            tile_map_opt = Some(tm);
-        }
-
-        if tile_map_opt.is_none() {
-            error!("Tile map is none in tile builder run");
-            return;
-        }
-
-        let mut tile_map = tile_map_opt.unwrap();
 
         while match self.channel.1.try_recv() {
             Ok(event) => match event {
@@ -79,10 +66,10 @@ impl ::specs::System<::utils::Delta> for System {
 
         }
 
-        for (d, t) in (&dwarf, &transform).iter() {
-            let location = t.get_pos();
+        for (dwarf, transform) in (&dwarves, &transforms).iter() {
+            let location = transform.get_pos();
 
-            let gen_range = d.get_gen_range();
+            let gen_range = dwarf.get_gen_range();
 
             for y in -gen_range..(gen_range + 1) {
                 for x in -gen_range..(gen_range + 1) {

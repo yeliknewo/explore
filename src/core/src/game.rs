@@ -1,3 +1,7 @@
+use sys::{PathFinder};
+
+use comps::{PathFindingData};
+
 pub type Channel = (
     ::std::sync::mpsc::Sender<SendEvent>,
     ::std::sync::mpsc::Receiver<RecvEvent>,
@@ -46,9 +50,10 @@ impl Game {
             w.register::<::comps::Living>();
             w.register::<::comps::Physical>();
             w.register::<::comps::Tile>();
-            w.register::<::comps::TileMap>();
             w.register::<::comps::PathFindingData>();
-            w.register::<::comps::PathsStorage>();
+
+            w.add_resource(::comps::TileMap::new());
+            w.add_resource(::comps::PathsStorage::new());
 
             ::specs::Planner::<::utils::Delta>::new(w, 8)
         };
@@ -60,10 +65,6 @@ impl Game {
                 return Err(::utils::Error::Logged)
             },
         }));
-
-        planner.mut_world().create_now()
-            .with(::comps::TileMap::new())
-            .build();
 
         planner.mut_world().create_now()
             .with(::comps::Camera::new_from_ortho_helper(
@@ -191,10 +192,16 @@ impl Game {
         );
 
         planner.add_system(
-            ::sys::DwarfPathFinder::new(target_delta_time),
-            "dwarf path finder",
+            PathFinder::new(target_delta_time),
+            "path finder",
             28
         );
+
+        // planner.add_system(
+        //     ::sys::DwarfPathFinder::new(target_delta_time),
+        //     "dwarf path finder",
+        //     28
+        // );
 
         planner.add_system(
             ::sys::DwarfPathApplier::new(),
@@ -271,6 +278,7 @@ impl Game {
                     )
                     .with(::comps::RenderData::new(::art::spritesheet::layers::TILES, ::art::spritesheet::tiles::FOREGROUND_TINT, art_rect, ::art::spritesheet::tiles::SIZE))
                     .with(::comps::Clickable::new(::math::Rect::new_from_coords(0.0, 0.0, 1.0, 1.0)))
+                    .with(PathFindingData::new())
                     .build()))) {
                     Ok(()) => true,
                     Err(err) => {
