@@ -1,4 +1,4 @@
-use sys::{PathFinder};
+use sys::{PathFinder, DwarfTargeter};
 
 use comps::{PathFindingData};
 
@@ -122,23 +122,6 @@ impl Game {
             )
         };
 
-        // for y in -10..11i32 {
-        //     for x in -10..11i32 {
-        //         planner.mut_world().create_now()
-        //             .with(tiles_render)
-        //             .with(::comps::Transform::new(
-        //                 ::nalgebra::Isometry3::new(
-        //                     ::nalgebra::Vector3::new(x as f32, y as f32, 0.0),
-        //                     ::nalgebra::Vector3::new(0.0, 0.0, 0.0),
-        //                 ),
-        //                 ::nalgebra::Vector3::new(1.0, 1.0, 1.0)
-        //             ))
-        //             .with(::comps::RenderData::new(default_tint, ::art::spritesheet::tiles::GRASS_MID, ::art::spritesheet::tiles::SIZE))
-        //             .with(::comps::Clickable::new(::math::Rect::new_from_coords(0.0, 0.0, 1.0, 1.0)))
-        //             .build();
-        //     }
-        // }
-
         let p1_idle = vec!(::art::spritesheet::p1::STAND);
 
         let mut p1_walk = vec!();
@@ -146,7 +129,7 @@ impl Game {
 
         let p1_fall = vec!(::art::spritesheet::p1::HURT);
 
-        for _ in 0..5 {
+        for _ in 0..1 {
             planner.mut_world().create_now()
                 .with(p1_render)
                 .with(::comps::Transform::new(
@@ -197,16 +180,16 @@ impl Game {
             28
         );
 
-        // planner.add_system(
-        //     ::sys::DwarfPathFinder::new(target_delta_time),
-        //     "dwarf path finder",
-        //     28
-        // );
+        planner.add_system(
+            DwarfTargeter::new(),
+            "dwarf targeter",
+            27
+        );
 
         planner.add_system(
             ::sys::DwarfPathApplier::new(),
             "dwarf path applier",
-            27
+            26
         );
 
         planner.add_system(

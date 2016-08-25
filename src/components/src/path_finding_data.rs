@@ -1,38 +1,42 @@
+use specs::Entity;
+
 pub struct Component {
     path_data: Option<PathData>,
-    path_ready: bool,
-    path: Vec<::math::Point2>,
-    priority: usize,
+    path_status: PathStatus,
+    entity: Option<Entity>,
 }
 
 impl Component {
     pub fn new() -> Component {
         Component {
             path_data: None,
-            path_ready: false,
-            path: vec!(),
-            priority: 0,
+            path_status: PathStatus::Empty,
+            entity: None,
         }
     }
 
-    pub fn get_mut_path_ready(&mut self) -> &mut bool {
-        &mut self.path_ready
+    pub fn get_mut_entity_opt(&mut self) -> &mut Option<Entity> {
+        &mut self.entity
     }
 
-    pub fn get_mut_path(&mut self) -> &mut Vec<::math::Point2> {
-        &mut self.path
+    pub fn get_mut_path_status(&mut self) -> &mut PathStatus {
+        &mut self.path_status
     }
 
     pub fn get_mut_path_data_opt(&mut self) -> &mut Option<PathData> {
         &mut self.path_data
     }
 
-    pub fn get_mut_path_data(&mut self) -> Option<&mut PathData> {
-        self.path_data.as_mut()
+    pub fn get_entity(&self) -> Option<&Entity> {
+        self.entity.as_ref()
     }
 
-    pub fn get_mut_priority(&mut self) -> &mut usize {
-        &mut self.priority
+    pub fn get_path_status(&self) -> &PathStatus {
+        &self.path_status
+    }
+
+    pub fn get_mut_path_data(&mut self) -> Option<&mut PathData> {
+        self.path_data.as_mut()
     }
 }
 
@@ -44,6 +48,13 @@ impl ::specs::Component for Component {
 // pub enum PathData {
 //     Data(Vec<PathFindingNode>, Vec<usize>, Vec<usize>, ::math::Point2),
 // }
+
+#[derive(Debug, Clone)]
+pub enum PathStatus {
+    Empty,
+    DoneButHasLinks,
+    WaitForNewTiles,
+}
 
 pub type PathData = (
     Vec<PathNode>,  //nodes

@@ -118,6 +118,13 @@ impl std::ops::Add<Point2I> for Point2I {
     }
 }
 
+impl std::fmt::Display for Point2I {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "({},{})", self.get_x(), self.get_y())
+    }
+}
+
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Point2 {
     x: ::utils::Coord,

@@ -16,7 +16,7 @@ extern crate art;
 
 pub mod control;
 pub mod dwarf_path_applier;
-pub mod dwarf_path_finder;
+pub mod dwarf_targeter;
 pub mod dwarf;
 pub mod living;
 pub mod path_finder;
@@ -27,7 +27,7 @@ pub mod tile_link_updater;
 
 pub use self::control::System as Control;
 pub use self::dwarf_path_applier::System as DwarfPathApplier;
-pub use self::dwarf_path_finder::System as DwarfPathFinder;
+pub use self::dwarf_targeter::System as DwarfTargeter;
 pub use self::dwarf::System as Dwarf;
 pub use self::living::System as Living;
 pub use self::path_finder::System as PathFinder;

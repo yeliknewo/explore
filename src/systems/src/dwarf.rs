@@ -14,7 +14,7 @@ impl ::specs::System<::utils::Delta> for System {
     fn run(&mut self, arg: ::specs::RunArg, time: ::utils::Delta) {
         use ::specs::Join;
 
-        let (transform, physical, mut dwarf, mut living) = arg.fetch(|w|
+        let (transforms, physicals, mut dwarves, mut livings) = arg.fetch(|w|
             (
                 w.read::<::comps::Transform>(),
                 w.read::<::comps::Physical>(),
@@ -23,27 +23,28 @@ impl ::specs::System<::utils::Delta> for System {
             )
         );
 
-        for (mut d, mut l, t, p) in (&mut dwarf, &mut living, &transform, &physical).iter() {
-            let speed = d.get_speed();
+        for (mut dwarf, mut living, transform, physical) in (&mut dwarves, &mut livings, &transforms, &physicals).iter() {
+            let speed = dwarf.get_speed();
 
-            let mut pp = d.get_mut_point_path();
+            let mut entity_path = dwarf.get_mut_entity_path();
 
             while {
-                if let Some(target) = pp.pop() {
-                    let offset_from_target = target.clone() - t.get_pos();
+                if let Some(target_entity) = entity_path.pop() {
+                    let target = transforms.get(target_entity).unwrap();
+                    let offset_from_target = target.get_pos().clone() - transform.get_pos();
 
-                    if offset_from_target.length() < p.get_speed_break().length() {
+                    if offset_from_target.length() < physical.get_speed_break().length() {
                         true
                     } else if offset_from_target.length() < speed * time {
-                        l.walk_to(target.clone());
+                        living.walk_to(target.get_pos());
                         false
                     } else {
-                        l.walk(offset_from_target.normalized() * speed);
-                        pp.push(target);
+                        living.walk(offset_from_target.normalized() * speed);
+                        entity_path.push(target_entity);
                         false
                     }
                 } else {
-                    l.idle();
+                    living.idle();
                     false
                 }
             } {

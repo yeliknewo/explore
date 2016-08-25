@@ -1,3 +1,7 @@
+use comps::PathFindingData;
+
+use comps::path_finding_data::PathStatus;
+
 pub type Channel = (
     ::std::sync::mpsc::Sender<SendEvent>,
     ::std::sync::mpsc::Receiver<RecvEvent>,
@@ -42,18 +46,24 @@ impl ::specs::System<::utils::Delta> for System {
     fn run(&mut self, arg: ::specs::RunArg, _: ::utils::Delta) {
         use ::specs::Join;
 
-        let (dwarves, transforms, mut tile_map) = arg.fetch(|w|
+        let (dwarves, transforms, mut path_finding_datas, mut tile_map) = arg.fetch(|w|
             (
                 w.read::<::comps::Dwarf>(),
                 w.read::<::comps::Transform>(),
-                w.write_resource::<::comps::TileMap>()
+                w.write::<PathFindingData>(),
+                w.write_resource::<::comps::TileMap>(),
             )
         );
+
+        let mut any_new = false;
 
         while match self.channel.1.try_recv() {
             Ok(event) => match event {
                 RecvEvent::TileMade(location, entity) => {
-                    tile_map.get_mut_tiles().insert(location, entity);
+                    warn!("creating tile with entity id: {}", entity.get_id());
+                    tile_map.get_mut_tiles().insert(location, entity.clone());
+                    *path_finding_datas.get_mut(entity).unwrap().get_mut_entity_opt() = Some(entity);
+                    any_new = true;
                     true
                 },
             },
@@ -64,6 +74,13 @@ impl ::specs::System<::utils::Delta> for System {
             }
         } {
 
+        }
+
+        if any_new {
+            for mut path_finding_data in (&mut path_finding_datas).iter() {
+                *path_finding_data.get_mut_path_status() = PathStatus::Empty;
+                *path_finding_data.get_mut_path_data_opt() = None;
+            }
         }
 
         for (dwarf, transform) in (&dwarves, &transforms).iter() {
@@ -79,8 +96,9 @@ impl ::specs::System<::utils::Delta> for System {
 
                     if tile_map.get_tile(&checking).is_none() {
                         if checking.get_y() < 10
-                        && (checking.get_x() != 2 || checking.get_y() != 2)
-                        && (checking.get_x() != 3 || checking.get_y() != 2)
+                        && checking.get_y() > -10
+                        && checking.get_x() > -10
+                        && checking.get_x() < 10
                         {
                             match self.channel.0.send(SendEvent::NewTile(
                                 checking.clone(),
