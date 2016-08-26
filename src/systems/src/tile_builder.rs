@@ -58,7 +58,6 @@ impl ::specs::System<::utils::Delta> for System {
         while match self.channel.1.try_recv() {
             Ok(event) => match event {
                 RecvEvent::TileMade(location, entity) => {
-                    warn!("creating tile with entity id: {}", entity.get_id());
                     tile_map.get_mut_tiles().insert(location, entity.clone());
                     *path_finding_datas.get_mut(entity).unwrap().get_mut_entity_opt() = Some(entity);
                     any_new = true;

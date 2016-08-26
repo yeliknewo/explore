@@ -6,6 +6,7 @@ use utils::Delta;
 pub struct System {
     target_delta_time: Delta,
     multiplier: Delta,
+    finished_path_finding: bool,
 }
 
 impl System {
@@ -13,6 +14,7 @@ impl System {
         System {
             target_delta_time: target_delta_time,
             multiplier: 0.1,
+            finished_path_finding: false,
         }
     }
 }
@@ -32,10 +34,16 @@ impl ::specs::System<Delta> for System {
             )
         );
 
+        let mut exit = false;
+
         'closing: for (tile, mut path_finding_data) in (&tiles, &mut path_finding_datas).iter() {
             if !path_finding_data.are_links_done() || path_finding_data.are_paths_done() {
                 continue;
             }
+
+            warn!("tile: {}", tile.get_location());
+
+            self.finished_path_finding = false;
 
             let (mut nodes, mut open, mut closed) = match path_finding_data.get_mut_path_data_opt().take() {
                 Some((nodes, open, closed)) => {
@@ -125,6 +133,7 @@ impl ::specs::System<Delta> for System {
 
                 if precise_time_s() > new_time + delta_time * self.multiplier {
                     *path_finding_data.get_mut_path_data_opt() = Some((nodes, open, closed));
+                    exit = true;
                     break 'closing;
                 }
             }
@@ -132,6 +141,12 @@ impl ::specs::System<Delta> for System {
             *path_finding_data.get_mut_paths_done() = true;
         }
 
-        self.multiplier = (self.multiplier - (delta_time - self.target_delta_time)).max(0.1).min(1.0);
+        if !exit && !self.finished_path_finding {
+            warn!("finished pathfinding");
+            self.finished_path_finding = true;
+        }
+
+        self.multiplier = (self.multiplier - (self.target_delta_time - delta_time) * 1000.0).max(0.1).min(0.9);
+        // warn!("multiplier: {}", self.multiplier);
     }
 }
