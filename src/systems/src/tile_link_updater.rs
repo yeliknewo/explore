@@ -1,3 +1,5 @@
+use comps::PathFindingData;
+
 pub struct System {
 
 }
@@ -14,18 +16,19 @@ impl ::specs::System<::utils::Delta> for System {
     fn run(&mut self, arg: ::specs::RunArg, _: ::utils::Delta) {
         use ::specs::Join;
 
-        let (tile_map, mut tiles) = arg.fetch(|w|
+        let (tile_map, mut tiles, mut path_finding_datas) = arg.fetch(|w|
             (
                 w.read_resource::<::comps::TileMap>(),
-                w.write::<::comps::Tile>()
+                w.write::<::comps::Tile>(),
+                w.write::<PathFindingData>()
             )
         );
 
         let mut links = vec!();
 
-        for mut tile in (&mut tiles).iter() {
-            if tile.get_location().get_x().abs() == 9 && tile.get_location().get_y().abs() == 9 {
-                warn!("location, slow, fast: {}, {}, {}", tile.get_location(), tile.get_links().len(), tile.get_fast_links().len());
+        for (mut tile, mut path_finding_data) in (&mut tiles, &mut path_finding_datas).iter() {
+            if path_finding_data.are_links_done() {
+                continue;
             }
 
             for link in tile.get_mut_links().drain(..) {
@@ -39,6 +42,8 @@ impl ::specs::System<::utils::Delta> for System {
                     tile.get_mut_links().push(link);
                 }
             }
+
+            *path_finding_data.get_mut_links_done() = true;
         }
     }
 }

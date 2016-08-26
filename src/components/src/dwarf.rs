@@ -18,7 +18,7 @@ impl Component {
             target_tile: None,
             entity_path: vec!(),
             speed: speed,
-            gen_range: 5,
+            gen_range: 1,
         }
     }
 

@@ -1,7 +1,5 @@
 use comps::PathFindingData;
 
-use comps::path_finding_data::PathStatus;
-
 pub type Channel = (
     ::std::sync::mpsc::Sender<SendEvent>,
     ::std::sync::mpsc::Receiver<RecvEvent>,
@@ -78,8 +76,9 @@ impl ::specs::System<::utils::Delta> for System {
 
         if any_new {
             for mut path_finding_data in (&mut path_finding_datas).iter() {
-                *path_finding_data.get_mut_path_status() = PathStatus::Empty;
                 *path_finding_data.get_mut_path_data_opt() = None;
+                *path_finding_data.get_mut_paths_done() = false;
+                *path_finding_data.get_mut_links_done() = false;
             }
         }
 
@@ -94,7 +93,7 @@ impl ::specs::System<::utils::Delta> for System {
 
                     let checking: ::math::Point2I = conv + ::math::Point2I::new(x, y);
 
-                    if tile_map.get_tile(&checking).is_none() {
+                    if tile_map.get_tile(&checking).is_none() && !tile_map.is_tile_placeheld(&checking) {
                         if checking.get_y() < 10
                         && checking.get_y() > -10
                         && checking.get_x() > -10
@@ -120,6 +119,7 @@ impl ::specs::System<::utils::Delta> for System {
                                     continue;
                                 }
                             }
+                            tile_map.hold_place(&checking);
                         }
                     }
                 }

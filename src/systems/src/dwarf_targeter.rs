@@ -14,7 +14,7 @@ impl System {
 }
 
 impl ::specs::System<Delta> for System {
-    fn run(&mut self, arg: ::specs::RunArg, delta_time: Delta) {
+    fn run(&mut self, arg: ::specs::RunArg, _: Delta) {
         use specs::Join;
 
         let (tiles, tile_map, mut dwarves, mut clickables, mut render_datas) = arg.fetch(|w|

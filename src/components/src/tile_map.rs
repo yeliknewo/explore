@@ -1,6 +1,11 @@
+use std::collections::HashMap;
+
+use math::Point2I;
+
 #[derive(Debug)]
 pub struct Component {
     tiles: ::std::collections::HashMap<::math::Point2I, ::specs::Entity>,
+    placeheld_tiles: HashMap<Point2I, bool>,
     dirty: bool,
 }
 
@@ -8,6 +13,7 @@ impl Component {
     pub fn new() -> Component {
         Component {
             tiles: ::std::collections::HashMap::new(),
+            placeheld_tiles: HashMap::new(),
             dirty: true,
         }
     }
@@ -35,6 +41,17 @@ impl Component {
     pub fn get_mut_tiles(&mut self) -> &mut ::std::collections::HashMap<::math::Point2I, ::specs::Entity> {
         self.make_dirty();
         &mut self.tiles
+    }
+
+    pub fn hold_place(&mut self, location: &Point2I) {
+        self.placeheld_tiles.insert(location.clone(), true);
+    }
+
+    pub fn is_tile_placeheld(&self, location: &Point2I) -> bool {
+        match self.placeheld_tiles.get(location) {
+            Some(value) => *value,
+            None => false,
+        }
     }
 }
 
