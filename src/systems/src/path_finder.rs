@@ -1,17 +1,11 @@
 use time::precise_time_s;
 use std::cmp::Ordering;
 
-use std::io::prelude::*;
-use std::io::BufWriter;
-use std::fs::File;
-
 use utils::Delta;
 
 pub struct System {
     target_delta_time: Delta,
     multiplier: Delta,
-    writer: BufWriter<File>,
-    finished_path_finding: bool,
 }
 
 impl System {
@@ -19,8 +13,6 @@ impl System {
         System {
             target_delta_time: target_delta_time,
             multiplier: 0.1,
-            writer: BufWriter::new(File::create("log.txt").unwrap()),
-            finished_path_finding: false,
         }
     }
 }
@@ -40,14 +32,10 @@ impl ::specs::System<Delta> for System {
             )
         );
 
-        let mut exit = false;
-
         'closing: for (tile, mut path_finding_data) in (&tiles, &mut path_finding_datas).iter() {
             if !path_finding_data.are_links_done() || path_finding_data.are_paths_done() {
                 continue;
             }
-
-            self.finished_path_finding = false;
 
             let (mut nodes, mut open, mut closed) = match path_finding_data.get_mut_path_data_opt().take() {
                 Some((nodes, open, closed)) => {
@@ -85,14 +73,12 @@ impl ::specs::System<Delta> for System {
                     {
                         let mut current = node_index;
                         let mut last = nodes.len();
-                        self.writer.write_all(format!("starting path\n").as_bytes()).unwrap();
                         while let Some(node) = nodes.get(current) {
                             if last == current {
                                 break;
                             }
                             last = current;
                             current = node.1;
-                            self.writer.write_all(format!("path: {}\n", tiles.get(node.0).unwrap().get_location()).as_bytes()).unwrap();
                         }
                     }
                     for link in tile.get_fast_links() {
@@ -117,11 +103,6 @@ impl ::specs::System<Delta> for System {
                     }
                 }
 
-                self.writer.write_all(format!("current tile: {}, {:?}\n", tiles.get(node.0).unwrap().get_location(), node.0).as_bytes()).unwrap();
-                for close in &closed {
-                    self.writer.write_all(format!("closed: {}, {:?}\n", tiles.get(nodes[*close].0).unwrap().get_location(), nodes[*close].0).as_bytes()).unwrap();
-                }
-
                 if let Err(index) = closed.binary_search_by(|probe| {
                     nodes[*probe].0.cmp(&node.0)
                 }) {
@@ -144,19 +125,11 @@ impl ::specs::System<Delta> for System {
 
                 if precise_time_s() > new_time + delta_time * self.multiplier {
                     *path_finding_data.get_mut_path_data_opt() = Some((nodes, open, closed));
-                    exit = true;
                     break 'closing;
                 }
             }
 
             *path_finding_data.get_mut_paths_done() = true;
-            self.writer.write_all(format!("finished tile\n\n").as_bytes()).unwrap();
-        }
-
-        if !exit && !self.finished_path_finding {
-            warn!("finished pathfinding");
-            self.writer.write_all(format!("finished pathfinding\n\n\n").as_bytes()).unwrap();
-            self.finished_path_finding = true;
         }
 
         self.multiplier = (self.multiplier - (delta_time - self.target_delta_time)).max(0.1).min(1.0);
