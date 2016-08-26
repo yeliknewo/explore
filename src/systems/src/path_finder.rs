@@ -104,6 +104,9 @@ impl ::specs::System<Delta> for System {
                             nodes[*probe].0.cmp(&node.0)
                         }) {
                             closed.insert(index, node_index);
+                            closed.sort_by(|first, second|
+                                nodes[*first].0.cmp(&nodes[*second].0)
+                            );
                             let mut path = vec!();
                             let mut current = node_index;
                             let mut last = nodes.len();
@@ -138,9 +141,9 @@ impl ::specs::System<Delta> for System {
                     }
                 }
                 current_status_level = PathStatus::DoneButHasLinks;
-                if !exit {
-                    warn!("finished filling in empty paths");
-                }
+                // if !exit {
+                //     warn!("finished filling in empty paths");
+                // }
                 true
             },
             PathStatus::DoneButHasLinks => {
@@ -161,7 +164,10 @@ impl ::specs::System<Delta> for System {
                                 (
                                     vec!((match tile_map.get_tile(&tile.get_location()) {
                                         Some(entity) => *entity,
-                                        None => break,
+                                        None => {
+                                            exit = true;
+                                            break 'closing2;
+                                        },
                                     }, 0usize, 0.0f64)),
                                     vec!(0usize),
                                     Vec::<usize>::new()
@@ -206,6 +212,9 @@ impl ::specs::System<Delta> for System {
                                 nodes[*probe].0.cmp(&node.0)
                             }) {
                                 closed.insert(index, node_index);
+                                closed.sort_by(|first, second|
+                                    nodes[*first].0.cmp(&nodes[*second].0)
+                                );
                                 let mut path = vec!();
                                 let mut current = node_index;
                                 let mut last = nodes.len();
@@ -237,12 +246,15 @@ impl ::specs::System<Delta> for System {
                         } else {
                             self.done_but_has_links.push(first);
                         }
+                    } else {
+                        break 'closing2;
                     }
                 }
 
                 if self.done_but_has_links.is_empty() {
                     current_status_level = PathStatus::WaitForNewTiles;
                 }
+
                 true
             },
             PathStatus::WaitForNewTiles => {
@@ -251,7 +263,6 @@ impl ::specs::System<Delta> for System {
         } {
 
         }
-
 
         // warn!("path finder pre mult: {}", self.multiplier);
         self.multiplier = (self.multiplier - (delta_time - self.target_delta_time)).max(0.1).min(1.0);

@@ -24,6 +24,10 @@ impl ::specs::System<::utils::Delta> for System {
         let mut links = vec!();
 
         for mut tile in (&mut tiles).iter() {
+            if tile.get_location().get_x().abs() == 9 && tile.get_location().get_y().abs() == 9 {
+                warn!("location, slow, fast: {}, {}, {}", tile.get_location(), tile.get_links().len(), tile.get_fast_links().len());
+            }
+
             for link in tile.get_mut_links().drain(..) {
                 links.push(link);
             }

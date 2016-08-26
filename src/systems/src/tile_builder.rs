@@ -99,6 +99,8 @@ impl ::specs::System<::utils::Delta> for System {
                         && checking.get_y() > -10
                         && checking.get_x() > -10
                         && checking.get_x() < 10
+                        && !(checking.get_x() == 4 && checking.get_y() == 4)
+                        && !(checking.get_x() == 5 && checking.get_y() == 5)
                         {
                             match self.channel.0.send(SendEvent::NewTile(
                                 checking.clone(),
