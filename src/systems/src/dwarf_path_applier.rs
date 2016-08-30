@@ -33,7 +33,6 @@ impl ::specs::System<::utils::Delta> for System {
                         if path_data.1 {
                             path.reverse();
                         }
-                        
                         dwarf.get_mut_entity_path().append(&mut path);
                     }
                 }
